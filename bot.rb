@@ -1,9 +1,10 @@
+require 'dbm'
+require 'timeout'
+
 require 'rubygems'
 require 'eventmachine'
 require 'rfeedparser'
 require 'logger-1.2.7'
-require 'timeout'
-require 'dbm'
 
 FeedItem = Struct.new :feed_title, :title, :url
 
@@ -118,7 +119,7 @@ class IRC < EventMachine::Protocols::LineAndTextProtocol
 	end
 
 	def notify_update(entry)
-		say "#{entry.title} -- #{entry.url} -- #{entry.feed_title}"
+		say "#{nl2sp(entry.title)} -- #{entry.url} -- #{entry.feed_title}"
 	end
 
 	def help
@@ -138,12 +139,21 @@ class IRC < EventMachine::Protocols::LineAndTextProtocol
 			@checker.updates_for url
 		end
 	end
+
+	def unbind
+		EventMachine::stop_event_loop
+	end
+end
+
+def nl2sp(str)
+	str.gsub(/\n/, " ")
 end
 
 checker = FeedChecker.new
 checker.updates # cache the updates
 
 logger = Logger.new('logs/langdev.log', 'daily')
+crawling = false
 
 EM.error_handler do |e|
 	logger.error e.message
@@ -153,10 +163,18 @@ EventMachine::run {
 	connection = EventMachine::connect 'irc.ozinger.org', 6666, IRC, checker, logger
 
 	EventMachine::PeriodicTimer.new(FeedChecker::Period) do
-		logger.info "checking feed..."
-		checker.updates.each do |entry|
-			connection.notify_update(entry) if entry
-		end
+		EM.defer(proc do
+			if crawling
+				logger.info "crawling already"
+				return
+			end
+			crawling = true
+			logger.info "checking feed..."
+			checker.updates.each do |entry|
+				connection.notify_update(entry) if entry
+			end
+			crawling = false
+		end)
 	end
 }
 

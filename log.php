@@ -1,4 +1,5 @@
 <?php
+define('GROUP_THRES', 60 * 15);
 $today = date('Y-m-d');
 if (!isset($_SERVER['PATH_INFO']) || !preg_match('/^\/[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $_SERVER['PATH_INFO'])) {
 	$file = 'langdev.log';
@@ -24,6 +25,7 @@ $collect_links = @$_SERVER['QUERY_STRING'] == 'links';
 	#nav a:hover { background-color: transparent; }
 	table { border-collapse: collapse; }
 	td { padding: 0.5em 1em; border-top: 1px solid #ddd; line-height: 1.4; }
+	.group-changed td { border-top: 3px solid #06c; }
 	.time { font-size: 0.85em; color: #999; }
 	.time a { color: #999; text-decoration: none; }
 	.time a:hover { background-color: #ccc; color: #fff; }
@@ -47,19 +49,19 @@ function autolink($string) {
 }
 
 function grep_messages($part) {
-	preg_match_all('/^.*? \[(.+?) .*?\] .*? <<< :(.+?)!.+? PRIVMSG #.+? :(.+)$/m', $part, $messages, PREG_SET_ORDER);
+	preg_match_all('/^.*? \[(.+?) .*?\] .*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/m', $part, $messages, PREG_SET_ORDER);
 	return $messages;
 }
 
 if ($collect_links):
 $parts = explode("\n--", `grep "<<< .* PRIVMSG" $file | grep -C 1 "http:"`);
 foreach (array_reverse($parts) as $part) {
-	preg_match_all('/^.*? \[(.+?) .*?\] .*? <<< :(.+?)!.+? PRIVMSG #.+? :(.+)$/m', $part, $messages, PREG_SET_ORDER);
+	preg_match_all('/^.*? \[(.+?) .*?\] .*? (<<<|>>>) (?::(.+?)!.+?)? PRIVMSG #.+? :(.+)$/m', $part, $messages, PREG_SET_ORDER);
 ?>
 <table class="link">
 <?php
 	foreach ($messages as $line) {
-		list(, $time, $nick, $message) = $line;
+		list(, $time, , $nick, $message) = $line;
 ?>
 <tr>
 	<td class="time"><?=date('H:i:s', strtotime($time))?></td>
@@ -73,22 +75,26 @@ foreach (array_reverse($parts) as $part) {
 <?php
 }
 else:
-$part = `grep "<<< .* PRIVMSG" $file`;
+$part = `grep PRIVMSG $file`;
 $messages = grep_messages($part);
 ?>
 <table>
 <?php
 	$no = 1;
+	$last_time = 0;
 	foreach ($messages as $line) {
-		list(, $time, $nick, $message) = $line;
+		list(, $time, , $nick, $message) = $line;
+		$t = strtotime($time);
+		$class = ($t - $last_time) > GROUP_THRES ? 'group-changed' : '';
 		$no++;
 ?>
-<tr id="line<?=$no?>">
-	<td class="time" title="<?=$time?>"><a href="#line<?=$no?>"><?=date('H:i:s', strtotime($time))?></a></td>
-	<td class="nickname"><?=htmlspecialchars($nick)?></td>
+<tr id="line<?=$no?>"<?php if ($class) echo " class=\"$class\""; ?>>
+	<td class="time" title="<?=$time?>"><a href="#line<?=$no?>"><?=date('H:i:s', $t)?></a></td>
+	<td class="nickname"><?=$nick ? htmlspecialchars($nick) : '<strong>낚지</strong>'?></td>
 	<td class="message"><?=autolink(htmlspecialchars($message))?></td>
 </tr>
 <?php
+		$last_time = $t;
 	}
 ?>
 </table>
