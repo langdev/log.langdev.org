@@ -147,23 +147,19 @@ else:
 	header("Content-Type: application/atom+xml");
 	echo '<?xml version="1.0" encoding="utf-8"?>';
 	$log = Log::today();
-	$data = $log->grouped_messages();
+	$data = array_reverse($log->grouped_messages());
 	unset($data['ungrouped']);
-	function _last($array) {
-		return $array[count($array) - 1];
-	}
-	$last_msg = _last(_last($data));
-	$no = 1;
+	$no = count($data);
 ?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 	<title>Log of #langdev</title>
 	<link href="http://ditto.just4fun.co.kr/bot/log" />
-	<updated><?=date('c', $last_msg['time'])?></updated>
+	<updated><?=date('c', $data[0][count($data[0])-1]['time'])?></updated>
 <?php foreach ($data as $group): ?>
 	<entry>
 		<title><?=$log->title()?>#<?=$no?></title>
 		<link href="http://ditto.just4fun.co.kr<?=$log->uri()?>#line<?=$group[0]['no']?>" />
-		<updated><?php $last_msg = _last($group); echo date('c', $last_msg['time']); ?></updated>
+		<updated><?php echo date('c', $group[count($group)-1]['time']); ?></updated>
 		<content type="xhtml">
 			<table xmlns="http://www.w3.org/1999/xhtml">
 				<?php foreach ($group as $msg): ?>
@@ -176,7 +172,7 @@ else:
 			</table>
 		</content>
 	</entry>
-<?php $no++; endforeach; ?>
+<?php $no--; endforeach; ?>
 </feed>
 <?php
 endif;
