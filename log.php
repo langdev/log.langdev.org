@@ -27,10 +27,26 @@ class Log
 		return $this->date == date('Ymd');
 	}
 
-	function title() {
+	function yesterday() {
+		return $this->days_before(1);
+	}
+
+	function days_before($days) {
+		list($y, $m, $d) = $this->parsed_date();
+		$timestamp = mktime(0, 0, 0, $m, $d, $y);
+		$yesterday = strtotime("-$days day", $timestamp);
+		return new Log(date('Ymd', $yesterday));
+	}
+
+	function parsed_date() {
 		$y = substr($this->date, 0, 4);
 		$m = substr($this->date, 4, 2);
 		$d = substr($this->date, 6, 2);
+		return array($y, $m, $d);
+	}
+
+	function title() {
+		list($y, $m, $d) = $this->parsed_date();
 		return "$y-$m-$d";
 	}
 
@@ -77,38 +93,75 @@ class Log
 	function uri() {
 		return "/bot/log/" . $this->title();
 	}
+
+	function search($keyword) {
+		$messages = $this->messages();
+		$result = array();
+		foreach ($messages as $msg) {
+			if (stripos($msg['text'], $keyword) !== FALSE)
+				$result[] = $msg;
+		}
+		return $result;
+	}
+}
+
+class SearchQuery
+{
+	var $keyword;
+	var $days = 7;
+	var $offset = 0;
+
+	function SearchQuery($keyword) {
+		$this->keyword = $keyword;
+	}
+
+	function perform() {
+		$log = Log::today();
+		if ($this->offset > 0)
+			$log = $log->days_before($this->offset * $this->days);
+
+		$results = array();
+		for ($days = 0; $days < $this->days; $days++) {
+			$result = $log->search($this->keyword);
+			if (!empty($result))
+				$results[$log->date] = $result;
+			$log = $log->yesterday();
+		}
+		return $results;
+	}
 }
 
 function autolink($string) {
 	return preg_replace("#([a-z]+)://[-0-9a-z_.@:~\\#%=+?/$;,&]+#i", '<a href="$0">$0</a>', $string);
 }
 
-/////////////////////////////
+function h($string) { return htmlspecialchars($string); }
 
-$path = trim(@$_SERVER['PATH_INFO'], '/');
-if (empty($path)) {
-	$log = Log::today();
-	header("Location: " . $log->uri());
-	exit;
+function print_lines($log, $lines) {
+	foreach ($lines as $msg): ?>
+				<tr id="line<?=$msg['no']?>">
+					<td class="time" title="<?=date('c', $msg['time'])?>"><a href="<?=$log->uri()?>#line<?=$msg['no']?>"><?=date('H:i:s', $msg['time'])?></a></td>
+					<td class="nickname"><?=!$msg['bot?'] ? h($msg['nick']) : '<strong>낚지</strong>'?></td>
+					<td class="message"><?=autolink(h($msg['text']))?></td>
+				</tr>
+	<?php
+	endforeach;
 }
 
-if ($path != 'atom'):
-	$log = new Log(preg_replace('/^(\d{4})-(\d{2})-(\d{2})$/', '$1$2$3', $path));
-	if (!$log->available()) {
-		header("HTTP/1.1 404 Not Found");
-		echo "Not found";
-		exit;
-	}
+function print_header($title) {
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-	<title>#langdev log: <?=$log->date?></title>
+	<title>#langdev log: <?=$title?></title>
 	<link rel="stylesheet" href="/bot/style.css" type="text/css">
 	<style type="text/css">
 	#nav { font-size: 0.6em; margin-left: 2em; color: #999; vertical-align: middle; }
 	#nav a { color: #999; text-decoration: underline; }
 	#nav a:hover { background-color: transparent; }
+	form { border: 1px solid #ccc; padding: 1em; clear: both; }
+	form#tagline { clear: right; border: none; padding: 0; }
+	form p { margin: 0; text-indent: 0; }
 	table { border-collapse: collapse; margin-bottom: 2em; border-top: 2px solid #999; }
 	td { padding: 0.5em 1em; border-top: 1px solid #ddd; line-height: 1.4; }
 	.time { font-size: 0.85em; color: #999; }
@@ -120,30 +173,19 @@ if ($path != 'atom'):
 	</style>
 </head>
 <body>
-<h1>Log of #langdev</h1>
-
-<h2><?=$log->title()?>
-<span id="nav">
-	<a href="/bot/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/bot/log/">오늘</a>로 날아가기 / <a href="/bot/log/atom">Atom 피드</a><span class="new">new!</span>
-</span></h2>
-
-<?php foreach ($log->grouped_messages() as $group): ?>
-<table>
-	<?php foreach ($group as $msg): ?>
-	<tr id="line<?=$msg['no']?>">
-		<td class="time" title="<?=date('c', $msg['time'])?>"><a href="#line<?=$msg['no']?>"><?=date('H:i:s', $msg['time'])?></a></td>
-		<td class="nickname"><?=!$msg['bot?'] ? htmlspecialchars($msg['nick']) : '<strong>낚지</strong>'?></td>
-		<td class="message"><?=autolink(htmlspecialchars($msg['text']))?></td>
-	</tr>
-	<?php endforeach; ?>
-</table>
-<?php endforeach; ?>
-
-<p><a href="/bot/">낚지</a>가 기록합니다.</a></p>
-</body>
-</html>
 <?php
-else:
+}
+
+/////////////////////////////
+
+$path = trim(@$_SERVER['PATH_INFO'], '/');
+if (empty($path)) {
+	$log = Log::today();
+	header("Location: " . $log->uri());
+	exit;
+}
+
+if ($path == 'atom'):
 	header("Content-Type: application/atom+xml");
 	echo '<?xml version="1.0" encoding="utf-8"?>';
 	$log = Log::today();
@@ -162,17 +204,77 @@ else:
 		<updated><?php echo date('c', $group[count($group)-1]['time']); ?></updated>
 		<content type="xhtml">
 			<table xmlns="http://www.w3.org/1999/xhtml">
-				<?php foreach ($group as $msg): ?>
-				<tr id="line<?=$msg['no']?>">
-					<td class="time" title="<?=date('c', $msg['time'])?>"><a href="#line<?=$msg['no']?>"><?=date('H:i:s', $msg['time'])?></a></td>
-					<td class="nickname"><?=!$msg['bot?'] ? htmlspecialchars($msg['nick']) : '<strong>낚지</strong>'?></td>
-					<td class="message"><?=autolink(htmlspecialchars($msg['text']))?></td>
-				</tr>
-				<?php endforeach; ?>
+				<?php print_lines($log, $group); ?>
 			</table>
 		</content>
 	</entry>
 <?php $no--; endforeach; ?>
 </feed>
+<?php
+elseif ($path == 'search'):
+	if (isset($_GET['q'])) {
+		$query = new SearchQuery(trim($_GET['q']));
+		$query->offset = !empty($_GET['offset']) ? (int)$_GET['offset'] : 0;
+		$result = $query->perform();
+	} else
+		$query = null;
+?>
+<?php print_header("search"); ?>
+<h1>Log Search</h1>
+
+<form method="get" action="">
+	<p>최근 7일 간의 기록을 검색합니다.</p>
+	<p>검색어: <input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /></p>
+</form>
+
+<?php if ($query): ?>
+<?php if (!empty($result)): ?>
+<?php foreach ($result as $date => $messages): $log = new Log($date); ?>
+<div class="day">
+	<h2><a href="<?=$log->uri()?>"><?=$log->title()?></a></h2>
+	<table>
+		<?php print_lines($log, $messages); ?>
+	</table>
+</div>
+<?php endforeach; ?>
+<?php else: ?>
+<p>검색 결과가 없습니다.</p>
+<?php endif; ?>
+
+<p><a href="?q=<?=urlencode(h($query->keyword))?>&amp;offset=<?=$query->offset + 1?>">이전 7일 &rarr;</a></p>
+<?php endif; ?>
+</body>
+</html>
+
+<?php
+else:
+	$log = new Log(preg_replace('/^(\d{4})-(\d{2})-(\d{2})$/', '$1$2$3', $path));
+	if (!$log->available()) {
+		header("HTTP/1.1 404 Not Found");
+		echo "Not found";
+		exit;
+	}
+?>
+<?php print_header($log->title()); ?>
+<h1>Log of #langdev</h1>
+
+<form method="get" action="search" id="tagline">
+<p><input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /></p>
+</form>
+
+<h2><?=$log->title()?>
+<span id="nav">
+	<a href="/bot/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/bot/log/">오늘</a>로 날아가기 / <a href="/bot/log/atom">Atom 피드</a>
+</span></h2>
+
+<?php foreach ($log->grouped_messages() as $group): ?>
+<table>
+	<?php print_lines($log, $group); ?>
+</table>
+<?php endforeach; ?>
+
+<p><a href="/bot/">낚지</a>가 기록합니다.</a></p>
+</body>
+</html>
 <?php
 endif;
