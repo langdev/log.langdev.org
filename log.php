@@ -93,16 +93,6 @@ class Log
 	function uri() {
 		return "/bot/log/" . $this->title();
 	}
-
-	function search($keyword) {
-		$messages = $this->messages();
-		$result = array();
-		foreach ($messages as $msg) {
-			if (stripos($msg['text'], $keyword) !== FALSE)
-				$result[] = $msg;
-		}
-		return $result;
-	}
 }
 
 class SearchQuery
@@ -122,12 +112,22 @@ class SearchQuery
 
 		$results = array();
 		for ($days = 0; $days < $this->days; $days++) {
-			$result = $log->search($this->keyword);
+			$result = $this->filter($log->messages());
 			if (!empty($result))
-				$results[$log->date] = $result;
+				// descending order
+				$results[$log->date] = array_reverse($result);
 			$log = $log->yesterday();
 		}
 		return $results;
+	}
+
+	function filter($messages) {
+		$result = array();
+		foreach ($messages as $msg) {
+			if (stripos($msg['text'], $this->keyword) !== FALSE)
+				$result[] = $msg;
+		}
+		return $result;
 	}
 }
 
@@ -170,6 +170,7 @@ function print_header($title) {
 	.nickname { font-size: 0.9em; }
 	.link { border: 1px solid #ddd; background-color: #f8f8f8; padding: 0.5em; margin-bottom: 2em; }
 	.new { font-size: xx-small; vertical-align: super; color: #000; }
+	.highlight { background-color: #ff0; }
 	</style>
 </head>
 <body>
@@ -242,6 +243,16 @@ elseif ($path == 'search'):
 <?php endif; ?>
 
 <p><a href="?q=<?=urlencode(h($query->keyword))?>&amp;offset=<?=$query->offset + 1?>">이전 7일 &rarr;</a></p>
+
+<script type="text/javascript">
+var re = /<?=h(preg_quote($query->keyword))?>/gi
+var cells = document.getElementsByTagName('td')
+for (var i = 0; i < cells.length; i++) {
+	var cell = cells[i]
+	if (cell.className == 'message')
+		cell.innerHTML = cell.innerHTML.replace(re, "<span class=\"highlight\">$&</span>");
+}
+</script>
 <?php endif; ?>
 </body>
 </html>
