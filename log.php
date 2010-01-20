@@ -246,11 +246,26 @@ elseif ($path == 'search'):
 
 <script type="text/javascript">
 var re = /<?=h(preg_quote($query->keyword))?>/gi
+var repl = "<span class=\"highlight\">$&</span>"
 var cells = document.getElementsByTagName('td')
 for (var i = 0; i < cells.length; i++) {
 	var cell = cells[i]
-	if (cell.className == 'message')
-		cell.innerHTML = cell.innerHTML.replace(re, "<span class=\"highlight\">$&</span>");
+	if (cell.className == 'message' && cell.innerHTML.match(re))
+	{
+		var content = []
+		for (var j = 0; j < cell.childNodes.length; j++)
+		{
+			var node = cell.childNodes[j]
+			if (node.nodeType == 3)
+				content.push(node.nodeValue.replace(re, repl))
+			else if (node.nodeType == 1 && node.tagName == 'A') {
+				content.push('<a href="' + node.href + '">')
+				content.push(node.innerHTML.replace(re, repl))
+				content.push('</a>')
+			}
+		}
+		cell.innerHTML = content.join('')
+	}
 }
 </script>
 <?php endif; ?>
