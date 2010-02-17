@@ -52,7 +52,9 @@ class Log
 
 	function messages() {
 		$messages = array();
-		$fp = fopen($this->path(), 'r');
+		$fp = @fopen($this->path(), 'r');
+		if (!$fp)
+			return $messages;
 		$no = 1;
 		while ($line = fgets($fp)) {
 			if (preg_match('/PRIVMSG/', $line)) {
