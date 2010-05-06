@@ -2,7 +2,6 @@
 class Log
 {
 	var $date; // YYMMDD format
-	var $threshold = 900; // seconds
 
 	function Log($date) {
 		$this->date = $date;
@@ -50,14 +49,16 @@ class Log
 		return "$y-$m-$d";
 	}
 
-	function messages() {
+	function messages($from = 0) {
 		$messages = array();
 		$fp = @fopen($this->path(), 'r');
 		if (!$fp)
 			return $messages;
-		$no = 1;
+		$no = 0;
 		while ($line = fgets($fp)) {
 			if (preg_match('/PRIVMSG/', $line)) {
+				$no++;
+				if ($no < $from) continue;
 				preg_match('/^.*? \[(.+?) .*?\] .*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts);
 				$messages[] = array(
 					'no' => $no,
@@ -66,35 +67,35 @@ class Log
 					'text' => $parts[4],
 					'bot?' => !$parts[3],
 				);
-				$no++;
 			}
 		}
 		fclose($fp);
 		return $messages;
 	}
 
-	function grouped_messages() {
-		$messages = $this->messages();
-		$groups = array();
-		$group = array();
-		$prev_time = $messages[0]['time'];
-		foreach ($messages as $msg) {
-			if (($msg['time'] - $prev_time) > $this->threshold) {
-				// 그룹이 갈린다. 이 메시지 앞까지 한 그룹이 된다.
-				$groups[] = $group;
-				$group = array();
-			}
-			$group[] = $msg;
-			$prev_time = $msg['time'];
-		}
-		if (!empty($group))
-			$groups['ungrouped'] = $group;
-		return $groups;
-	}
-
 	function uri() {
 		return "/bot/log/" . $this->title();
 	}
+}
+
+define('GROUP_THRES', 900 /*seconds*/);
+
+function group_messages($messages) {
+	$groups = array();
+	$group = array();
+	$prev_time = $messages[0]['time'];
+	foreach ($messages as $msg) {
+		if (($msg['time'] - $prev_time) > GROUP_THRES) {
+			// 그룹이 갈린다. 이 메시지 앞까지 한 그룹이 된다.
+			$groups[] = $group;
+			$group = array();
+		}
+		$group[] = $msg;
+		$prev_time = $msg['time'];
+	}
+	if (!empty($group))
+		$groups['ungrouped'] = $group;
+	return $groups;
 }
 
 class SearchQuery
@@ -173,7 +174,9 @@ function print_header($title) {
 	.link { border: 1px solid #ddd; background-color: #f8f8f8; padding: 0.5em; margin-bottom: 2em; }
 	.new { font-size: xx-small; vertical-align: super; color: #000; }
 	.highlight { background-color: #ff0; }
+	#update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
 	</style>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
 </head>
 <body>
 <?php
@@ -192,7 +195,7 @@ if ($path == 'atom'):
 	header("Content-Type: application/atom+xml");
 	echo '<?xml version="1.0" encoding="utf-8"?>';
 	$log = Log::today();
-	$data = array_reverse($log->grouped_messages());
+	$data = array_reverse(group_messages($log->messages()));
 	unset($data['ungrouped']);
 	$no = count($data);
 ?>
@@ -282,6 +285,9 @@ else:
 		echo "Not found";
 		exit;
 	}
+	if (empty($_GET['from'])):
+		$messages = $log->messages();
+		$lines = $messages[count($messages)-1]['no'];
 ?>
 <?php print_header($log->title()); ?>
 <h1>Log of #langdev</h1>
@@ -295,14 +301,40 @@ else:
 	<a href="/bot/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/bot/log/">오늘</a>로 날아가기 / <a href="/bot/log/atom">Atom 피드</a>
 </span></h2>
 
-<?php foreach ($log->grouped_messages() as $group): ?>
+<?php foreach (group_messages($messages) as $group): ?>
 <table>
 	<?php print_lines($log, $group); ?>
 </table>
 <?php endforeach; ?>
 
+<table id="updates"></table>
+
+<script type="text/javascript">
+var from = <?=$lines + 1?>;
+var interval = 3000
+function update_log() {
+	$.get('?from=' + from, function (data) {
+		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height()
+		$('#updates').append(data)
+		if (willScroll)
+			$(window).scrollTop($(document).height() + 100)
+	})
+	window.setTimeout(update_log, interval)
+}
+window.setTimeout(update_log, interval)
+</script>
+
 <p><a href="/bot/">낚지</a>가 기록합니다.</a></p>
 </body>
 </html>
 <?php
+	else:
+		$messages = $log->messages((int)$_GET['from']);
+		if (!empty($messages)) {
+			$lines = $messages[count($messages)-1]['no'] + 1;
+			print_lines($log, $messages);
+			$js = "from=$lines;interval-=50*".count($messages);
+		} else $js = "interval+=100";
+		echo "<script type='text/javascript'>$js</script>";
+	endif;
 endif;
