@@ -1,4 +1,6 @@
 <?php
+require 'auth.php';
+
 class Log
 {
 	var $date; // YYMMDD format
@@ -59,7 +61,7 @@ class Log
 			if (preg_match('/PRIVMSG/', $line)) {
 				$no++;
 				if ($no < $from) continue;
-				preg_match('/^.*? \[(.+?) .*?\] .*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts);
+				preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts);
 				$messages[] = array(
 					'no' => $no,
 					'time' => strtotime($parts[1]),
@@ -135,7 +137,7 @@ class SearchQuery
 }
 
 function autolink($string) {
-	return preg_replace("#([a-z]+)://[-0-9a-z_.@:~\\#%=+?/$;,&]+#i", '<a href="$0">$0</a>', $string);
+	return preg_replace("#(https?)://([-0-9a-z_.@:~\\#%=+?/$;,&]+)#i", '<a href="http://fw.mearie.org/$2" rel="noreferrer">$0</a>', $string);
 }
 
 function h($string) { return htmlspecialchars($string); }
@@ -225,7 +227,7 @@ elseif ($path == 'search'):
 	} else
 		$query = null;
 ?>
-<?php print_header("search"); ?>
+<?php print_header("search" . ($query ? ": $query->keyword" : '')); ?>
 <h1>Log Search</h1>
 
 <form method="get" action="">
