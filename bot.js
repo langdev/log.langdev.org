@@ -4,6 +4,7 @@ var net = require('net'),
 
 var port = 6666
 var host = 'irc.ozinger.org'
+var nickname = '산낚지'
 var channels = '#langdev'
 var logPath = 'logs/langdev.log'
 
@@ -40,10 +41,10 @@ function get_timestamp(date) {
 var logFile = null
 var today = get_date_str(new Date)
 
-function rotate_log_file(dateStr) {
+function rotate_log_file() {
 	fs.closeSync(logFile)
 	logFile = null
-	fs.renameSync(logPath, logPath + '.' + dateStr)
+	fs.renameSync(logPath, logPath + '.' + today)
 }
 
 function get_log_file(date) {
@@ -69,7 +70,7 @@ function send_line(stream, line) {
 	stream.write(line + "\r\n")
 }
 
-function recieve_line(stream, line) {
+function receive_line(stream, line) {
 	log('<<< ' + line)
 	actions.forEach(function (pair) {
 		var match = pair[0].exec(line)
@@ -84,12 +85,28 @@ var stream = net.createConnection(port, host)
 
 stream.on('connect', function () {
 	send_line(stream, "USER bot 0 * :fishing")
-	send_line(stream, "NICK nakji")
+	send_line(stream, "NICK " + nickname)
 })
 
 stream.on('data', function (data) {
 	var lines = data.toString('utf8').split('\r\n')
 	lines.forEach(function (line) {
-		recieve_line(stream, line)
+		receive_line(stream, line)
 	})
 })
+
+// HTTP server
+
+var http = require('http'),
+	querystring = require('querystring')
+
+http.createServer(function (req, res) {
+	if (req.method == 'POST') {
+		req.on('data', function (chunk) {
+			var POST = querystring.parse(chunk)
+			send_line(stream, 'PRIVMSG ' + channels + ' :<' + POST['nick'] + '> ' + POST['msg'])
+			res.writeHead(200)
+			res.end()
+		})
+	}
+}).listen(6667)

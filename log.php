@@ -62,6 +62,11 @@ class Log
 				$no++;
 				if ($no < $from) continue;
 				preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts);
+				if (preg_match('/^<(.+?)> (.*)$/', $parts[4], $tmp)) {
+					$parts[3] = $tmp[1];
+					$parts[4] = $tmp[2];
+				}
+
 				$messages[] = array(
 					'no' => $no,
 					'time' => strtotime($parts[1]),
@@ -159,6 +164,7 @@ function print_header($title) {
 <html>
 <head>
 	<title>#langdev log: <?=$title?></title>
+	<meta name="viewport" content="width=device-width" />
 	<link rel="stylesheet" href="/bot/style.css" type="text/css">
 	<style type="text/css">
 	#nav { font-size: 0.6em; margin-left: 2em; color: #999; vertical-align: middle; }
@@ -177,6 +183,11 @@ function print_header($title) {
 	.new { font-size: xx-small; vertical-align: super; color: #000; }
 	.highlight { background-color: #ff0; }
 	#update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
+
+	@media handheld {
+		body { margin: 0; }
+		#nav { clear: both; }
+	}
 	</style>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
 </head>
@@ -280,6 +291,14 @@ for (var i = 0; i < cells.length; i++) {
 </html>
 
 <?php
+elseif ($path == 'say'):
+	$ctx = stream_context_create(array(
+		'http' => array(
+			'method' => 'POST',
+			'content' => "nick=$_SERVER[PHP_AUTH_USER]&msg=$_POST[msg]",
+		)
+	));
+	file_get_contents("http://localhost:6667/", false, $ctx);
 else:
 	$log = new Log(preg_replace('/^(\d{4})-(\d{2})-(\d{2})$/', '$1$2$3', $path));
 	if (!$log->available()) {
@@ -309,7 +328,12 @@ else:
 </table>
 <?php endforeach; ?>
 
+<?php if ($log->is_today()): ?>
 <table id="updates"></table>
+
+<form method="post" action="say" id="say">
+<p><input type="text" name="msg" id="msg" size="50" /> <input type="submit" value="Say!" /> 갱신 주기: <span id="period">3000</span>ms</p>
+</form>
 
 <script type="text/javascript">
 var from = <?=$lines + 1?>;
@@ -320,11 +344,21 @@ function update_log() {
 		$('#updates').append(data)
 		if (willScroll)
 			$(window).scrollTop($(document).height() + 100)
+		$('#period').text(interval)
 	})
 	window.setTimeout(update_log, interval)
 }
 window.setTimeout(update_log, interval)
+
+$('#say').submit(function(event) {
+	$.post($(this).attr('action'), $(this).serialize(), function() {
+		update_log()
+	})
+	$('#msg').attr('value', '')
+	event.preventDefault()
+})
 </script>
+<?php endif; ?>
 
 <p><a href="/bot/">낚지</a>가 기록합니다.</a></p>
 </body>
