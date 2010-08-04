@@ -62,9 +62,12 @@ class Log
 				$no++;
 				if ($no < $from) continue;
 				preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts);
-				if (preg_match('/^<(.+?)> (.*)$/', $parts[4], $tmp)) {
+				$is_bot = !$parts[3];
+
+				if ($is_bot && preg_match('/^<(.+?)> (.*)$/', $parts[4], $tmp)) {
 					$parts[3] = $tmp[1];
 					$parts[4] = $tmp[2];
+					$is_bot = false;
 				}
 
 				$messages[] = array(
@@ -72,7 +75,7 @@ class Log
 					'time' => strtotime($parts[1]),
 					'nick' => $parts[3],
 					'text' => $parts[4],
-					'bot?' => !$parts[3],
+					'bot?' => $is_bot,
 				);
 			}
 		}
@@ -178,15 +181,17 @@ function print_header($title) {
 	.time { font-size: 0.85em; color: #999; }
 	.time a { color: #999; text-decoration: none; }
 	.time a:hover { background-color: #ccc; color: #fff; }
-	.nickname { font-size: 0.9em; }
+	.nickname { font-size: 0.9em; text-align: right; }
 	.link { border: 1px solid #ddd; background-color: #f8f8f8; padding: 0.5em; margin-bottom: 2em; }
 	.new { font-size: xx-small; vertical-align: super; color: #000; }
 	.highlight { background-color: #ff0; }
 	#update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
-
-	@media handheld {
+	
+	@media only screen and (max-device-width: 480px) {
 		body { margin: 0; }
-		#nav { clear: both; }
+		h2 { text-align: center; }
+		#nav { display: block; margin-left: 0; font-size: 0.8em; }
+		.time { display: none; }
 	}
 	</style>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
@@ -295,7 +300,7 @@ elseif ($path == 'say'):
 	$ctx = stream_context_create(array(
 		'http' => array(
 			'method' => 'POST',
-			'content' => "nick=$_SERVER[PHP_AUTH_USER]&msg=$_POST[msg]",
+			'content' => "nick=$_SERVER[PHP_AUTH_USER]&msg=" . rawurlencode($_POST['msg']),
 		)
 	));
 	file_get_contents("http://localhost:6667/", false, $ctx);
@@ -314,12 +319,12 @@ else:
 <h1>Log of #langdev</h1>
 
 <form method="get" action="search" id="tagline">
-<p><input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /></p>
+<p><input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /> / <a href="/bot/log/atom">Atom 피드</a></p>
 </form>
 
 <h2><?=$log->title()?>
 <span id="nav">
-	<a href="/bot/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/bot/log/">오늘</a>로 날아가기 / <a href="/bot/log/atom">Atom 피드</a>
+	<a href="/bot/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/bot/log/">오늘</a>로 날아가기 / <a href="#updates">맨 아래로 &darr;</a>
 </span></h2>
 
 <?php foreach (group_messages($messages) as $group): ?>
@@ -332,7 +337,7 @@ else:
 <table id="updates"></table>
 
 <form method="post" action="say" id="say">
-<p><input type="text" name="msg" id="msg" size="50" /> <input type="submit" value="Say!" /> 갱신 주기: <span id="period">3000</span>ms</p>
+<p>&lt;<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>&gt; <input type="text" name="msg" id="msg" size="50" /> <input type="submit" value="Say!" /> 갱신 주기: <span id="period">3000</span>ms</p>
 </form>
 
 <script type="text/javascript">
