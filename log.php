@@ -1,4 +1,5 @@
 <?php
+ini_set('display_errors', 'Off');
 require 'auth.php';
 
 class Log
@@ -61,7 +62,8 @@ class Log
 			if (preg_match('/PRIVMSG/', $line)) {
 				$no++;
 				if ($no < $from) continue;
-				preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts);
+				if (!preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts))
+					continue;
 				$is_bot = !$parts[3];
 
 				if ($is_bot && preg_match('/^<(.+?)> (.*)$/', $parts[4], $tmp)) {
@@ -166,6 +168,7 @@ function print_header($title) {
 <!DOCTYPE html>
 <html>
 <head>
+	<meta charset="UTF-8" />
 	<title>#langdev log: <?=$title?></title>
 	<meta name="viewport" content="width=device-width" />
 	<link rel="stylesheet" href="/bot/style.css" type="text/css">
@@ -319,7 +322,7 @@ else:
 <h1>Log of #langdev</h1>
 
 <form method="get" action="search" id="tagline">
-<p><input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /> / <a href="/bot/log/atom">Atom 피드</a></p>
+<p><input type="text" name="q" value="<?=h(@$query->keyword)?>" /> <input type="submit" value="찾기" /> / <a href="/bot/log/atom">Atom 피드</a></p>
 </form>
 
 <h2><?=$log->title()?>
@@ -343,7 +346,7 @@ else:
 <script type="text/javascript">
 var from = <?=$lines + 1?>;
 var interval = 3000
-function update_log() {
+function _update_log() {
 	$.get('?from=' + from, function (data) {
 		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height()
 		$('#updates').append(data)
@@ -351,13 +354,16 @@ function update_log() {
 			$(window).scrollTop($(document).height() + 100)
 		$('#period').text(interval)
 	})
+}
+function update_log() {
+	_update_log()
 	window.setTimeout(update_log, interval)
 }
 window.setTimeout(update_log, interval)
 
 $('#say').submit(function(event) {
 	$.post($(this).attr('action'), $(this).serialize(), function() {
-		update_log()
+		_update_log()
 	})
 	$('#msg').attr('value', '')
 	event.preventDefault()
