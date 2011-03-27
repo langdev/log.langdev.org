@@ -110,14 +110,40 @@ function group_messages($messages) {
 	return $groups;
 }
 
+class Synonym
+{
+	var $dict;
+
+	function Synonym() {
+		$dict = array();
+		$fp = fopen("synonyms", 'r');
+		while ($line = fgets($fp)) {
+			$line = trim($line);
+			$words = explode(' ', $line);
+			foreach ($words as $word) {
+				$dict[$word] = $words;
+			}
+		}
+		$this->dict = $dict;
+	}
+
+	function get($word) {
+		$words = $this->dict[$word];
+		if (!isset($words)) $words = array($word);
+		return $words;
+	}
+}
+
 class SearchQuery
 {
-	var $keyword;
+	var $words;
 	var $days = 7;
 	var $offset = 0;
 
 	function SearchQuery($keyword) {
-		$this->keyword = $keyword;
+		$synonym = new Synonym();
+		$keyword = strtolower($keyword);
+		$this->words = $synonym->get($keyword);
 	}
 
 	function perform() {
@@ -139,8 +165,12 @@ class SearchQuery
 	function filter($messages) {
 		$result = array();
 		foreach ($messages as $msg) {
-			if (stripos($msg['text'], $this->keyword) !== FALSE)
-				$result[] = $msg;
+			foreach ($this->words as $word) {
+				if (stripos($msg['text'], $word) !== FALSE) {
+					$result[] = $msg;
+					break;
+				}
+			}
 		}
 		return $result;
 	}
