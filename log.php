@@ -128,6 +128,7 @@ class Synonym
 	}
 
 	function get($word) {
+		$word = strtolower($word);
 		$words = $this->dict[$word];
 		if (!isset($words)) $words = array($word);
 		return $words;
@@ -136,14 +137,15 @@ class Synonym
 
 class SearchQuery
 {
+	var $keyword;
 	var $words;
 	var $days = 7;
 	var $offset = 0;
 
 	function SearchQuery($keyword) {
 		$synonym = new Synonym();
-		$keyword = strtolower($keyword);
-		$this->words = $synonym->get($keyword);
+		$this->keyword = $keyword;
+		$this->words = $synonym->get($this->keyword);
 	}
 
 	function perform() {
