@@ -301,7 +301,7 @@ elseif ($path == 'search'):
 <p><a href="?q=<?=urlencode(h($query->keyword))?>&amp;offset=<?=$query->offset + 1?>">이전 7일 &rarr;</a></p>
 
 <script type="text/javascript">
-var re = /<?=h(preg_quote($query->keyword))?>/gi
+var re = /<?=h(implode('|', array_map('preg_quote', $query->words)))?>/gi
 var repl = "<span class=\"highlight\">$&</span>"
 var cells = document.getElementsByTagName('td')
 for (var i = 0; i < cells.length; i++) {
