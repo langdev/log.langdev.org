@@ -72,11 +72,14 @@ function send_line(stream, line) {
 
 function receive_line(stream, line) {
 	log('<<< ' + line)
+	var ignore = false;
 	actions.forEach(function (pair) {
+		if (ignore) return;
+
 		var match = pair[0].exec(line)
 		if (match) {
 			var stop = pair[1](stream, match)
-			if (stop) break
+			if (stop) ignore = true;
 		}
 	})
 }
@@ -102,6 +105,7 @@ var http = require('http'),
 
 http.createServer(function (req, res) {
 	if (req.method == 'POST') {
+		req.setEncoding('utf8')
 		req.on('data', function (chunk) {
 			var POST = querystring.parse(chunk)
 			send_line(stream, 'PRIVMSG ' + channels + ' :<' + POST['nick'] + '> ' + POST['msg'])
