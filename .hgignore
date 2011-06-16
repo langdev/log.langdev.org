@@ -1,0 +1,8 @@
+syntax: glob
+*.swp
+*.bak
+._*
+.DS_Store
+logs/*
+sphinx.conf
+
