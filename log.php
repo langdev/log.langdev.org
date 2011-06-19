@@ -246,7 +246,7 @@ function print_header($title) {
 $path = trim(@$_SERVER['PATH_INFO'], '/');
 if (empty($path)) {
 	$log = Log::today();
-	header("Location: " . $log->uri());
+	header("Location: " . $log->uri() . "?recent");
 	exit;
 }
 
@@ -360,7 +360,7 @@ else:
 		$messages = $log->messages();
 		$count = count($messages);
 		$lines = $messages[$count-1]['no'];
-		if ($only_recent = $log->is_today() && !isset($_GET['full'])) {
+		if ($only_recent = $log->is_today() && isset($_GET['recent'])) {
 			$now = time();
 			$from = 0;
 			foreach ($messages as $i => $msg) {
@@ -390,7 +390,7 @@ else:
 </span></h2>
 
 <?php if ($only_recent): ?>
-<p>최근 대화만 표시하고 있습니다. <a href="?full">전체 보기</a></p>
+<p>최근 대화만 표시하고 있습니다. <a href="<?=$log->uri()?>">전체 보기</a></p>
 <?php endif; ?>
 
 <?php foreach (group_messages($messages) as $group): ?>
