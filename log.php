@@ -25,6 +25,11 @@ class Log
 		return new Log(date('Ymd'));
 	}
 
+	/*static*/ function random() {
+		$rand = rand(30, 600);
+		return new Log(date('Ymd', strtotime("$rand days ago")));
+	}
+
 	function is_today() {
 		return $this->date == date('Ymd');
 	}
@@ -86,7 +91,7 @@ class Log
 	}
 
 	function uri() {
-		return "/bot/log/" . $this->title();
+		return "/log/" . $this->title();
 	}
 }
 
@@ -179,7 +184,7 @@ class SearchQuery
 }
 
 function autolink($string) {
-	return preg_replace("#(https?)://([-0-9a-z_.@:~\\#%=+?/$;,&]+)#i", '<a href="http://fw.mearie.org/$2" rel="noreferrer">$0</a>', $string);
+	return preg_replace("#(https?)://([-0-9a-z_.@:~\\#%=+?!/$;,&]+)#i", '<a href="http://fw.mearie.org/$2" rel="noreferrer">$0</a>', $string);
 }
 
 function h($string) { return htmlspecialchars($string); }
@@ -188,7 +193,7 @@ function print_lines($log, $lines) {
 	foreach ($lines as $msg): ?>
 				<tr id="line<?=$msg['no']?>">
 					<td class="time" title="<?=date('c', $msg['time'])?>"><a href="<?=$log->uri()?>#line<?=$msg['no']?>"><?=date('H:i:s', $msg['time'])?></a></td>
-					<td class="nickname"><?=!$msg['bot?'] ? h($msg['nick']) : '<strong>낚지</strong>'?></td>
+					<td class="nickname"><i>&lt;</i><?=!$msg['bot?'] ? h($msg['nick']) : '<strong>낚지</strong>'?><i>&gt;</i></td>
 					<td class="message"><?=autolink(h($msg['text']))?></td>
 				</tr>
 	<?php
@@ -203,7 +208,7 @@ function print_header($title) {
 	<meta charset="UTF-8" />
 	<title>#langdev log: <?=$title?></title>
 	<meta name="viewport" content="width=device-width" />
-	<link rel="stylesheet" href="/bot/style.css" type="text/css">
+	<link rel="stylesheet" href="/style.css" type="text/css">
 	<style type="text/css">
 	#nav { font-size: 0.6em; margin-left: 2em; color: #999; vertical-align: middle; }
 	#nav a { color: #999; text-decoration: underline; }
@@ -221,6 +226,7 @@ function print_header($title) {
 	.new { font-size: xx-small; vertical-align: super; color: #000; }
 	.highlight { background-color: #ff0; }
 	#update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
+	i { font-size: 0; color: transparent; }
 	
 	@media only screen and (max-device-width: 480px) {
 		body { margin: 0; }
@@ -244,7 +250,11 @@ if (empty($path)) {
 	exit;
 }
 
-if ($path == 'atom'):
+if ($path == 'random') {
+	$log = Log::random();
+	header("Location: " . $log->uri());
+	exit;
+} else if ($path == 'atom'):
 	header("Content-Type: application/atom+xml");
 	echo '<?xml version="1.0" encoding="utf-8"?>';
 	$log = Log::today();
@@ -254,12 +264,12 @@ if ($path == 'atom'):
 ?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 	<title>Log of #langdev</title>
-	<link href="http://ditto.just4fun.co.kr/bot/log" />
+	<link href="http://log.langdev.org/" />
 	<updated><?=date('c', $data[0][count($data[0])-1]['time'])?></updated>
 <?php foreach ($data as $group): ?>
 	<entry>
 		<title><?=$log->title()?>#<?=$no?></title>
-		<link href="http://ditto.just4fun.co.kr<?=$log->uri()?>#line<?=$group[0]['no']?>" />
+		<link href="http://log.langdev.org<?=$log->uri()?>#line<?=$group[0]['no']?>" />
 		<updated><?php echo date('c', $group[count($group)-1]['time']); ?></updated>
 		<content type="xhtml">
 			<table xmlns="http://www.w3.org/1999/xhtml">
@@ -348,19 +358,40 @@ else:
 	}
 	if (empty($_GET['from'])):
 		$messages = $log->messages();
-		$lines = $messages[count($messages)-1]['no'];
+		$count = count($messages);
+		$lines = $messages[$count-1]['no'];
+		if ($only_recent = $log->is_today() && !isset($_GET['full'])) {
+			$now = time();
+			$from = 0;
+			foreach ($messages as $i => $msg) {
+				if (($now - $msg['time']) <= 60*30) {
+					$from = $i;
+					break;
+				}
+			}
+			if ($count - $from < 50)
+				$from = $count - 50;
+			if ($from == 0)
+				$only_recent = false;
+			else
+				$messages = array_slice($messages, $from);
+		}
 ?>
 <?php print_header($log->title()); ?>
 <h1>Log of #langdev</h1>
 
 <form method="get" action="search" id="tagline">
-<p><input type="text" name="q" value="<?=h(@$query->keyword)?>" /> <input type="submit" value="찾기" /> / <a href="/bot/log/atom">Atom 피드</a></p>
+<p><input type="text" name="q" value="<?=h(@$query->keyword)?>" /> <input type="submit" value="찾기" /> / <a href="/log/atom">Atom 피드</a></p>
 </form>
 
 <h2><?=$log->title()?>
 <span id="nav">
-	<a href="/bot/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/bot/log/">오늘</a>로 날아가기 / <a href="#updates">맨 아래로 &darr;</a>
+	<a href="/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/log/">오늘</a>로 날아가기 / <a href="/log/random">운 좋은 예감</a> / <a href="#updates">맨 아래로 &darr;</a>
 </span></h2>
+
+<?php if ($only_recent): ?>
+<p>최근 대화만 표시하고 있습니다. <a href="?full">전체 보기</a></p>
+<?php endif; ?>
 
 <?php foreach (group_messages($messages) as $group): ?>
 <table>
@@ -377,13 +408,16 @@ else:
 
 <script type="text/javascript">
 var from = <?=$lines + 1?>;
-var interval = 3000
+var interval = 3000;
+var seq = 0;
 function _update_log() {
-	$.get('?from=' + from, function (data) {
-		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height()
+	var _from = from;
+	$.get('?from=' + _from, function (data) {
+		if (from > _from) return;
+		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height() + 20;
 		$('#updates').append(data)
 		if (willScroll)
-			$(window).scrollTop($(document).height() + 100)
+			$(window).scrollTop($(document).height() + 100000)
 		$('#period').text(interval)
 	})
 }
@@ -403,7 +437,7 @@ $('#say').submit(function(event) {
 </script>
 <?php endif; ?>
 
-<p><a href="/bot/">낚지</a>가 기록합니다.</a></p>
+<p>낚지가 기록합니다.</a></p>
 </body>
 </html>
 <?php
@@ -412,8 +446,8 @@ $('#say').submit(function(event) {
 		if (!empty($messages)) {
 			$lines = $messages[count($messages)-1]['no'] + 1;
 			print_lines($log, $messages);
-			$js = "from=$lines;interval-=50*".count($messages);
-		} else $js = "interval+=100";
+			$js = "from=$lines;interval=3000;";
+		} else $js = "interval=Math.min(10000, interval+100)";
 		echo "<script type='text/javascript'>$js</script>";
 	endif;
 endif;
