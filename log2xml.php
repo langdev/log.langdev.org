@@ -5,7 +5,7 @@
 
 ini_set('display_errors', 'Off');
 
-function messages($filename, $func_per_line) {
+function messages($filename) {
 	$fp = @fopen($filename, 'r');
 	if (!$fp)
 		return;
@@ -13,7 +13,6 @@ function messages($filename, $func_per_line) {
 	while ($line = fgets($fp)) {
 		if (preg_match('/PRIVMSG/', $line)) {
 			$no++;
-			if ($no < $from) continue;
 			if (!preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts))
 				continue;
 			$is_bot = !$parts[3];
@@ -24,13 +23,13 @@ function messages($filename, $func_per_line) {
 				$is_bot = false;
 			}
 
-			$func_per_line(array(
+			print2xml(array(
 				'no' => $no,
 				//'time' => strtotime($parts[1]),
 				'time' => $parts[1],
 				'nick' => $parts[3],
 				'text' => $parts[4],
-				//'bot?' => $is_bot,
+				'bot?' => $is_bot,
 			));
 		}
 	}
@@ -40,8 +39,8 @@ function messages($filename, $func_per_line) {
 // this is overflow in 32 bits
 // need "--enable-id64" compile option of sphinxsearch
 function unique_id($time, $lineno) {
-	$d = split("-", substr($time, 0, 9));
-	return "{$d[0]}{$d[1]}{$d[2]}{$lineno}";
+	$d = split("-", substr($time, 0, 10));
+	return "{$d[0]}{$d[1]}{$d[2]}" . sprintf("%08d", $lineno);
 }
 
 function print2xml($arr) {
@@ -51,12 +50,14 @@ function print2xml($arr) {
 	$nick = $arr['nick'];
 	$time = strtotime($arr['time']);
 	$lineno = $arr['no'];
+	$bot = $arr['bot?'] ? 1 : 0;
 
 	echo "<sphinx:document id=\"$id\">
 \t<content>$content</content>
-\t<lineno>$lineno</lineno>
+\t<no>$lineno</no>
 \t<nick>$nick</nick>
 \t<time>$time</time>
+\t<bot>$bot</bot>
 </sphinx:document>
 ";
 }
@@ -71,15 +72,16 @@ else {
 	echo '<?xml version="1.0" encoding="utf-8"?>
 <sphinx:docset>
 <sphinx:schema>
-	<sphinx:field name="content"/>
-	<sphinx:attr name="lineno" type="int" bits="32"/>
-	<sphinx:attr name="nick" type="str2ordinal"/>
+	<sphinx:field name="content" attr="string"/>
+	<sphinx:attr name="no" type="int" bits="32"/>
+	<sphinx:attr name="nick" type="string"/>
 	<sphinx:attr name="time" type="timestamp"/>
+	<sphinx:attr name="bot" type="bool"/>
 </sphinx:schema>
 ';
 
 	foreach ($argv as $ar)
-		messages($ar, print2xml);
+		messages($ar);
 
 	echo "</sphinx:docset>\n";
 }

@@ -1,6 +1,7 @@
 <?php
-ini_set('display_errors', 'Off');
-require 'auth.php';
+ini_set('display_errors', 'On');	// TODO: On -> Off
+//require 'auth.php';				// TODO: uncomment
+require 'sphinx/sphinxapi-1.10-beta.php';
 
 class Log
 {
@@ -178,6 +179,79 @@ class SearchQuery
 	}
 }
 
+class SphinxSearchQuery
+{
+	var $keyword;
+	//var $words;
+	var $days = 7;
+	var $offset = 0;
+	var $client;
+	var $index;
+
+	function SphinxSearchQuery($keyword) {
+		$synonym = new Synonym();
+		//$this->words = $synonym->get($this->keyword);
+
+		$this->keyword = $keyword;
+	}
+
+	function perform() {
+		// initialize sphinxsearch client
+		$sortby = "";
+		$sortexpr = "";
+		$ranker = SPH_RANK_PROXIMITY_BM25;
+		$this->index = "*";
+
+		$this->client = new SphinxClient();
+		$this->client->SetServer("localhost", 9312);
+		$this->client->SetConnectTimeout(1);
+		$this->client->SetArrayResult(true);
+		$this->client->SetWeights(array(100, 1));
+		$this->client->SetMatchMode(SPH_MATCH_ALL);
+
+		//$this->client->SetSortMode(SPH_SORT_EXTENDED, $sortby);
+		//$this->client->SetSortMode(SPH_SORT_EXPR, $sortexpr);
+		$this->client->SetLimits(0, 20, 1000);	// TODO change offset
+		$this->client->SetRankingMode($ranker);
+
+
+
+		$res = $this->client->Query($this->keyword, $this->index);
+		$results = array();
+
+		if ($res == false) {
+			// query failed, $this->client->GetLastError()
+			$err = $this->client->GetLastError();
+			?> Query Failed: <?=$err?> <?
+		}
+		else {
+			if (is_array($res["matches"])) {
+				$n = 1;		// TODO change index
+
+				foreach ($res["matches"] as $docinfo) {
+					$msg = array(
+						'no' => $docinfo['attrs']['no'],
+						'time' => date($docinfo['attrs']['time']),
+						'nick' => $docinfo['attrs']['nick'],
+						'text' => $docinfo['attrs']['content'],
+						'bot?' => $docinfo['attrs']['bot'],
+					);
+
+					$index = date('Ymd', $msg['time']);
+					if (array_key_exists($index, $results))
+						$results[$index][] = $msg;
+					else
+						$results[$index] = array($msg);
+
+					$n++;
+				}
+			}
+		}
+
+		return $results;
+	}
+}
+
 function autolink($string) {
 	return preg_replace("#(https?)://([-0-9a-z_.@:~\\#%=+?/$;,&]+)#i", '<a href="http://fw.mearie.org/$2" rel="noreferrer">$0</a>', $string);
 }
@@ -272,7 +346,7 @@ if ($path == 'atom'):
 <?php
 elseif ($path == 'search'):
 	if (isset($_GET['q'])) {
-		$query = new SearchQuery(trim($_GET['q']));
+		$query = new SphinxSearchQuery(trim($_GET['q']));
 		$query->offset = !empty($_GET['offset']) ? (int)$_GET['offset'] : 0;
 		$result = $query->perform();
 	} else

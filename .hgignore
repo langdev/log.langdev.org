@@ -5,4 +5,6 @@ syntax: glob
 .DS_Store
 logs/*
 sphinx.conf
+sphinx/index/*
+sphinx/log/*
 
