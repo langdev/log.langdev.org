@@ -201,7 +201,7 @@ class SphinxSearchQuery
 		//$sortexpr = "";
 		$ranker = SPH_RANK_PROXIMITY_BM25;
 		$this->index = "*";
-                $COUNT_PER_PAGE = 100;
+		$COUNT_PER_PAGE = 100;
 
 		$this->client = new SphinxClient();
 		$this->client->SetServer("localhost", 9312);
