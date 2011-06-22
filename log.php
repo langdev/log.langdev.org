@@ -189,18 +189,19 @@ class SphinxSearchQuery
 	var $index;
 
 	function SphinxSearchQuery($keyword) {
-		$synonym = new Synonym();
-		//$this->words = $synonym->get($this->keyword);
-
 		$this->keyword = $keyword;
+
+		//$synonym = new Synonym();
+		//$this->words = $synonym->get($this->keyword);
 	}
 
 	function perform() {
 		// initialize sphinxsearch client
-		$sortby = "";
-		$sortexpr = "";
+		$sortby = "@id DESC";   // docid format=("yyyymmdd%08d", lineno)
+		//$sortexpr = "";
 		$ranker = SPH_RANK_PROXIMITY_BM25;
 		$this->index = "*";
+                $COUNT_PER_PAGE = 100;
 
 		$this->client = new SphinxClient();
 		$this->client->SetServer("localhost", 9312);
@@ -209,13 +210,12 @@ class SphinxSearchQuery
 		$this->client->SetWeights(array(100, 1));
 		$this->client->SetMatchMode(SPH_MATCH_ALL);
 
-		//$this->client->SetSortMode(SPH_SORT_EXTENDED, $sortby);
+		$this->client->SetSortMode(SPH_SORT_EXTENDED, $sortby);
 		//$this->client->SetSortMode(SPH_SORT_EXPR, $sortexpr);
-		$this->client->SetLimits(0, 20, 1000);	// TODO change offset
+		$this->client->SetLimits($this->offset * $COUNT_PER_PAGE, $COUNT_PER_PAGE);
 		$this->client->SetRankingMode($ranker);
 
-
-
+		// do query!!
 		$res = $this->client->Query($this->keyword, $this->index);
 		$results = array();
 
@@ -226,8 +226,6 @@ class SphinxSearchQuery
 		}
 		else {
 			if (is_array($res["matches"])) {
-				$n = 1;		// TODO change index
-
 				foreach ($res["matches"] as $docinfo) {
 					$msg = array(
 						'no' => $docinfo['attrs']['no'],
@@ -242,8 +240,6 @@ class SphinxSearchQuery
 						$results[$index][] = $msg;
 					else
 						$results[$index] = array($msg);
-
-					$n++;
 				}
 			}
 		}
@@ -356,7 +352,7 @@ elseif ($path == 'search'):
 <h1>Log Search</h1>
 
 <form method="get" action="">
-	<p>최근 7일 간의 기록을 검색합니다.</p>
+	<p>어제까지의 기록을 검색합니다.</p>
 	<p>검색어: <input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /></p>
 </form>
 
@@ -374,7 +370,7 @@ elseif ($path == 'search'):
 <p>검색 결과가 없습니다.</p>
 <?php endif; ?>
 
-<p><a href="?q=<?=urlencode(h($query->keyword))?>&amp;offset=<?=$query->offset + 1?>">이전 7일 &rarr;</a></p>
+<p><a href="?q=<?=urlencode(h($query->keyword))?>&amp;offset=<?=$query->offset + 1?>">더 오래된 자료 &rarr;</a></p>
 
 <script type="text/javascript">
 var re = /<?=h(implode('|', array_map('preg_quote', $query->words)))?>/gi
