@@ -64,27 +64,40 @@ class Log
 			return $messages;
 		$no = 0;
 		while ($line = fgets($fp)) {
-			if (preg_match('/PRIVMSG/', $line)) {
+			if (!preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (.+)$/', $line, $parts))
+				continue;
+
+			list(, $timestamp, $direction, $data) = $parts;
+			
+			if (preg_match('/PRIVMSG/', $data)) {
 				$no++;
 				if ($no < $from) continue;
-				if (!preg_match('/^.*?\[(.+?)(?: #.*?)?\].*? (<<<|>>>) (?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $line, $parts))
+				if (!preg_match('/^(?::(.+?)!.+? )?PRIVMSG #.+? :(.+)$/', $data, $parts))
 					continue;
-				$is_bot = !$parts[3];
+				$is_bot = !$parts[1];
 
-				if ($is_bot && preg_match('/^<(.+?)> (.*)$/', $parts[4], $tmp)) {
-					$parts[3] = $tmp[1];
-					$parts[4] = $tmp[2];
+				if ($is_bot && preg_match('/^<(.+?)> (.*)$/', $parts[2], $tmp)) {
+					$parts[1] = $tmp[1];
+					$parts[2] = $tmp[2];
 					$is_bot = false;
 				}
 
 				$messages[] = array(
+				    'type' => 'privmsg',
 					'no' => $no,
-					'time' => strtotime($parts[1]),
-					'nick' => $parts[3],
-					'text' => $parts[4],
+					'time' => strtotime($timestamp),
+					'nick' => $parts[1],
+					'text' => $parts[2],
 					'bot?' => $is_bot,
 				);
-			}
+			} else if ($direction == '>>>' && !$from &&
+			        preg_match('/^JOIN #langdev/', $data)) {
+				$messages[] = array(
+				    'type' => 'join',
+				    'time' => strtotime($timestamp),
+				    'bot?' => true,
+				);
+            }
 		}
 		fclose($fp);
 		return $messages;
@@ -144,7 +157,7 @@ class SearchQuery
 {
 	var $keyword;
 	var $words;
-	var $days = 7;
+	var $days = 14;
 	var $offset = 0;
 
 	function SearchQuery($keyword) {
@@ -191,11 +204,19 @@ function h($string) { return htmlspecialchars($string); }
 
 function print_lines($log, $lines) {
 	foreach ($lines as $msg): ?>
+	<?php if ($msg['type'] == 'privmsg'): ?>
 				<tr id="line<?=$msg['no']?>">
 					<td class="time" title="<?=date('c', $msg['time'])?>"><a href="<?=$log->uri()?>#line<?=$msg['no']?>"><?=date('H:i:s', $msg['time'])?></a></td>
 					<td class="nickname"><i>&lt;</i><?=!$msg['bot?'] ? h($msg['nick']) : '<strong>낚지</strong>'?><i>&gt;</i></td>
 					<td class="message"><?=autolink(h($msg['text']))?></td>
 				</tr>
+	<?php elseif ($msg['type'] == 'join'): ?>
+				<tr class="rejoin">
+					<td class="time"><?=date('H:i:s', $msg['time'])?></td>
+					<td class="nickname"><i>&lt;</i><?=!$msg['bot?'] ? h($msg['nick']) : '<strong>낚지</strong>'?><i>&gt;</i></td>
+					<td class="message">** 낚지 부활! **</td>
+				</tr>
+	<?php endif; ?>
 	<?php
 	endforeach;
 }
