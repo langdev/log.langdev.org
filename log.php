@@ -1,7 +1,6 @@
 <?php
-// TODO: display_errors to Off and uncomment auth.php
-ini_set('display_errors', 'On');
-//require 'auth.php';
+ini_set('display_errors', 'Off');
+require 'auth.php';
 require 'sphinx/sphinxapi-2.0.1-beta.php';
 
 class Log
