@@ -17,7 +17,7 @@ sudo make install
 ./gen_sphinx_conf.sh
 
 # Indexing
-indexer --config sphinx.conf --all
+indexer --config sphinx.conf --all --rotate
 
 # start daemon
 searchd -c sphinx.conf
