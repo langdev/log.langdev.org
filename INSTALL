@@ -1,14 +1,13 @@
 # Install expat, libexpat (Ubuntu)
 sudo apt-get install expat libexpat1 libexpat1-dev
 
-# Compile and install sphinxsearch 0.9.9 with "--enable-id64" option
-wget http://sphinxsearch.com/files/sphinx-1.10-beta.tar.gz
-tar -xvzf sphinx-1.10-beta.tar.gz
-cd sphinx-1.10-beta
+# Compile and install sphinxsearch 2.0.1-beat with "--enable-id64" option
+wget http://sphinxsearch.com/files/sphinx-2.0.1-beta.tar.gz
+tar -xvzf sphinx-2.0.1-beta.tar.gz
+cd sphinx-2.0.1-beta
 ./configure --without-mysql --enable-id64
 make
 sudo make install
-
 
 ##########################
 # in langdev directory.. #

@@ -1,7 +1,8 @@
 <?php
-ini_set('display_errors', 'On');	// TODO: On -> Off
-//require 'auth.php';				// TODO: uncomment
-require 'sphinx/sphinxapi-1.10-beta.php';
+// TODO: display_errors to Off and uncomment auth.php
+ini_set('display_errors', 'On');
+//require 'auth.php';
+require 'sphinx/sphinxapi-2.0.1-beta.php';
 
 class Log
 {
@@ -182,50 +183,53 @@ class SearchQuery
 class SphinxSearchQuery
 {
 	var $keyword;
-	//var $words;
-	var $days = 7;
-	var $offset = 0;
-	var $client;
-	var $index;
+	var $offset;
+	var $message;
+	var $total;
+	var $COUNT_PER_PAGE;
 
 	function SphinxSearchQuery($keyword) {
 		$this->keyword = $keyword;
-
-		//$synonym = new Synonym();
-		//$this->words = $synonym->get($this->keyword);
+		$this->offset = 0;
+		$this->message = "";
+		$this->COUNT_PER_PAGE = 100;
 	}
 
 	function perform() {
+		$results = array();
+
+		if (strlen(trim($this->keyword)) == 0)
+			return $results;
+
 		// initialize sphinxsearch client
 		$sortby = "@id DESC";   // docid format=("yyyymmdd%08d", lineno)
 		//$sortexpr = "";
 		$ranker = SPH_RANK_PROXIMITY_BM25;
-		$this->index = "*";
-		$COUNT_PER_PAGE = 100;
+		$index = "*";
 
-		$this->client = new SphinxClient();
-		$this->client->SetServer("localhost", 9312);
-		$this->client->SetConnectTimeout(1);
-		$this->client->SetArrayResult(true);
-		$this->client->SetWeights(array(100, 1));
-		$this->client->SetMatchMode(SPH_MATCH_ALL);
+		$client = new SphinxClient();
+		$client->SetServer("localhost", 9312);
+		$client->SetConnectTimeout(1);
+		$client->SetArrayResult(true);
+		$client->SetWeights(array(100, 1));
+		$client->SetMatchMode(SPH_MATCH_ALL);
 
-		$this->client->SetSortMode(SPH_SORT_EXTENDED, $sortby);
-		//$this->client->SetSortMode(SPH_SORT_EXPR, $sortexpr);
-		$this->client->SetLimits($this->offset * $COUNT_PER_PAGE, $COUNT_PER_PAGE);
-		$this->client->SetRankingMode($ranker);
+		$client->SetSortMode(SPH_SORT_EXTENDED, $sortby);
+		//$client->SetSortMode(SPH_SORT_EXPR, $sortexpr);
+		$client->SetLimits($this->offset * $this->COUNT_PER_PAGE, $this->COUNT_PER_PAGE, 100000);
+		$client->SetRankingMode($ranker);
 
 		// do query!!
-		$res = $this->client->Query($this->keyword, $this->index);
-		$results = array();
+		$res = $client->Query($this->keyword, $index);
 
 		if ($res == false) {
-			// query failed, $this->client->GetLastError()
-			$err = $this->client->GetLastError();
-			?> Query Failed: <?=$err?> <?
+			$err = $client->GetLastError();
+			$this->message = "Query Failed: $err";
 		}
 		else {
-			if (is_array($res["matches"])) {
+			if (array_key_exists("matches", $res) and is_array($res["matches"])) {
+				$this->total = $res["total"];
+				$this->message = "총 $res[total]개의 로그가 검색되었습니다.";
 				foreach ($res["matches"] as $docinfo) {
 					$msg = array(
 						'no' => $docinfo['attrs']['no'],
@@ -242,9 +246,26 @@ class SphinxSearchQuery
 						$results[$index] = array($msg);
 				}
 			}
+			else {
+				$this->message = "No more logs...";
+			}
 		}
 
 		return $results;
+	}
+
+	function paging() {
+		$result = "Pages: ";
+		$maxpage = ceil($this->total / $this->COUNT_PER_PAGE);
+
+		for ($i = 0; $i < $maxpage; $i++) {
+			if ($i == $this->offset)
+				$result .= $i . " ";
+			else
+				$result .= "<a href=\"?q=" . urlencode(h($this->keyword)) . "&offset=$i\">$i</a> ";
+		}
+
+		return $result;
 	}
 }
 
@@ -354,10 +375,14 @@ elseif ($path == 'search'):
 <form method="get" action="">
 	<p>어제까지의 기록을 검색합니다.</p>
 	<p>검색어: <input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /></p>
+	<?php if ($query and $query->message): ?>
+	<p><?=$query->message?></p>
+	<?php endif; ?>
 </form>
 
 <?php if ($query): ?>
 <?php if (!empty($result)): ?>
+<p><?=$query->paging()?></p>
 <?php foreach ($result as $date => $messages): $log = new Log($date); ?>
 <div class="day">
 	<h2><a href="<?=$log->uri()?>"><?=$log->title()?></a></h2>
@@ -366,11 +391,10 @@ elseif ($path == 'search'):
 	</table>
 </div>
 <?php endforeach; ?>
+<p><?=$query->paging()?></p>
 <?php else: ?>
 <p>검색 결과가 없습니다.</p>
 <?php endif; ?>
-
-<p><a href="?q=<?=urlencode(h($query->keyword))?>&amp;offset=<?=$query->offset + 1?>">더 오래된 자료 &rarr;</a></p>
 
 <script type="text/javascript">
 var re = /<?=h(implode('|', array_map('preg_quote', $query->words)))?>/gi
