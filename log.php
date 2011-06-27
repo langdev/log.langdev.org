@@ -207,6 +207,7 @@ class SphinxSearchQuery
 
 	function SphinxSearchQuery($keyword) {
 		$this->keyword = $keyword;
+		$this->words = array($keyword);
 		$this->offset = 0;
 		$this->message = "";
 		$this->COUNT_PER_PAGE = 100;
@@ -250,7 +251,8 @@ class SphinxSearchQuery
 				foreach ($res["matches"] as $docinfo) {
 					$msg = array(
 						'no' => $docinfo['attrs']['no'],
-						'time' => date($docinfo['attrs']['time']),
+						'type' => 'privmsg',
+						'time' => $docinfo['attrs']['time'],
 						'nick' => $docinfo['attrs']['nick'],
 						'text' => $docinfo['attrs']['content'],
 						'bot?' => $docinfo['attrs']['bot'],

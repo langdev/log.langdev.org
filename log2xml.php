@@ -25,8 +25,7 @@ function messages($filename) {
 
 			print2xml(array(
 				'no' => $no,
-				//'time' => strtotime($parts[1]),
-				'time' => $parts[1],
+				'time' => strtotime($parts[1]),
 				'nick' => $parts[3],
 				'text' => $parts[4],
 				'bot?' => $is_bot,
@@ -39,8 +38,7 @@ function messages($filename) {
 // this is overflow in 32 bits
 // need "--enable-id64" compile option of sphinxsearch
 function unique_id($time, $lineno) {
-	$d = split("-", substr($time, 0, 10));
-	return "{$d[0]}{$d[1]}{$d[2]}" . sprintf("%08d", $lineno);
+	return date('Ymd', $time) . sprintf("%08d", $lineno);
 }
 
 function print2xml($arr) {
@@ -48,7 +46,7 @@ function print2xml($arr) {
 	$content = htmlspecialchars($arr['text'], ENT_QUOTES | ENT_IGNORE, "UTF-8");
 	//$content = $arr['text'];
 	$nick = $arr['nick'];
-	$time = strtotime($arr['time']);
+	$time = $arr['time'];
 	$lineno = $arr['no'];
 	$bot = $arr['bot?'] ? 1 : 0;
 
