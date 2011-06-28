@@ -1,0 +1,36 @@
+body { margin: 0; font-size: 13px; font-family: Malgun Gothic, 맑은 고딕, sans-serif; }
+a { color: #36c; text-decoration: none; }
+a:hover { background-color: #def; }
+h1, h2 { font-family: Helvetica, Arial, sans-serif; }
+h1 { float: left; font-size: 2.5em; margin-top: 0; }
+h2 { clear: left; font-size: 1.6em; font-weight: normal; }
+p, pre, li { line-height: 1.8; }
+pre { background-color: #eee; margin: 1.5em 2em; padding: 0.5em; font-size: 0.9em; }
+code { font-family: Bitstream Vera Sans Mono, Consolas, monospace; }
+#nav { color: #333; }
+#nav a { color: #333; text-decoration: underline; }
+#nav a:hover { background-color: transparent; }
+form p { margin: 0; text-indent: 0; }
+table { border-collapse: collapse; margin-bottom: 0; width: 100%; }
+tbody { border-bottom: 2px solid #999; }
+td { padding: 0.5em 1em; border-bottom: 1px solid #ddd; line-height: 1.4; }
+.time { font-size: 0.85em; color: #999; }
+.time a { color: #999; text-decoration: none; }
+.time a:hover { background-color: #ccc; color: #fff; }
+.nickname { font-size: 0.9em; text-align: right; }
+.link { border: 1px solid #ddd; background-color: #f8f8f8; padding: 0.5em; margin-bottom: 2em; }
+.new { font-size: xx-small; vertical-align: super; color: #000; }
+.highlight { background-color: #ff0; }
+#update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
+i { font-size: 0; color: transparent; }
+#navbar { position: fixed; top: 0; right: 0; background-color: #eee; box-shadow: 0px 2px 5px #888; padding: 10px 20px; opacity: 0.8; }
+#navbar h2 { margin: 0; }
+#only-recent { padding: 10px 20px; background-color: #ffc; margin: 0; border-bottom: 1px solid #ccc; }
+#say { padding: 10px; font-size: 0.9em; color: #333; background-color: #eee; }
+#eol { text-align: center; }
+
+@media only screen and (max-device-width: 480px) {
+    #navbar { position: static; padding: 10px; text-align: center; }
+    .time { display: none; }
+    #msg { width: 100%; }
+}

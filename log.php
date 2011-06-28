@@ -321,34 +321,8 @@ function print_header($title) {
 	<meta charset="UTF-8" />
 	<title>#langdev log: <?=$title?></title>
 	<meta name="viewport" content="width=device-width" />
-	<link rel="stylesheet" href="/style.css" type="text/css">
-	<style type="text/css">
-	#nav { font-size: 0.6em; margin-left: 2em; color: #999; vertical-align: middle; }
-	#nav a { color: #999; text-decoration: underline; }
-	#nav a:hover { background-color: transparent; }
-	form { border: 1px solid #ccc; padding: 1em; clear: both; }
-	form#tagline { clear: right; border: none; padding: 0; }
-	form p { margin: 0; text-indent: 0; }
-	table { border-collapse: collapse; margin-bottom: 2em; border-top: 2px solid #999; }
-	td { padding: 0.5em 1em; border-top: 1px solid #ddd; line-height: 1.4; }
-	.time { font-size: 0.85em; color: #999; }
-	.time a { color: #999; text-decoration: none; }
-	.time a:hover { background-color: #ccc; color: #fff; }
-	.nickname { font-size: 0.9em; text-align: right; }
-	.link { border: 1px solid #ddd; background-color: #f8f8f8; padding: 0.5em; margin-bottom: 2em; }
-	.new { font-size: xx-small; vertical-align: super; color: #000; }
-	.highlight { background-color: #ff0; }
-	#update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
-	i { font-size: 0; color: transparent; }
-	
-	@media only screen and (max-device-width: 480px) {
-		body { margin: 0; }
-		h2 { text-align: center; }
-		#nav { display: block; margin-left: 0; font-size: 0.8em; }
-		.time { display: none; }
-	}
-	</style>
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+	<link rel="stylesheet" href="/style.css?v2" type="text/css">
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
 </head>
 <body>
 <?php
@@ -494,32 +468,38 @@ else:
 		}
 ?>
 <?php print_header($log->title()); ?>
-<h1>Log of #langdev</h1>
+<div id="navbar">
 
-<form method="get" action="search" id="tagline">
+<h2><?=$log->title()?></h2>
+<p id="nav">
+	<a href="/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> &middot; <a href="/log/">오늘</a> &middot; <a href="/log/random">아무 날</a> / <a href="#bottom">맨 아래로 &darr;</a>
+</p>
+
+<form method="get" action="search" id="search">
 <p><input type="text" name="q" value="<?=h(@$query->keyword)?>" /> <input type="submit" value="찾기" /> / <a href="/log/atom">Atom 피드</a></p>
 </form>
+</div>
 
-<h2><?=$log->title()?>
-<span id="nav">
-	<a href="/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> 또는 <a href="/log/">오늘</a>로 날아가기 / <a href="/log/random">운 좋은 예감</a> / <a href="#updates">맨 아래로 &darr;</a>
-</span></h2>
-
+<div id="content">
 <?php if ($only_recent): ?>
-<p>최근 대화만 표시하고 있습니다. [<a href="<?=$log->uri()?>">전체 보기</a>] [<a href="<?=$log->uri()?>?recent=<?=$_GET['recent']+30?>">30분 더 보기</a>]</p>
+<p id="only-recent">최근 대화만 표시하고 있습니다. <a href="<?=$log->uri()?>">전체 보기</a> / <a href="<?=$log->uri()?>?recent=<?=$_GET['recent']+30?>">30분 더 보기</a></p>
 <?php endif; ?>
 
-<?php foreach (group_messages($messages) as $group): ?>
 <table>
+<?php foreach (group_messages($messages) as $group): ?>
+<tbody>
 	<?php print_lines($log, $group); ?>
-</table>
+</tbody>
 <?php endforeach; ?>
+<tbody id="updates">
+</tbody>
+</table>
 
 <?php if ($log->is_today()): ?>
-<table id="updates"></table>
-
 <form method="post" action="say" id="say">
-<p>&lt;<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>&gt; <input type="text" name="msg" id="msg" size="50" /> <input type="submit" value="Say!" /> 갱신 주기: <span id="period">3000</span>ms</p>
+<p><input type="text" name="msg" id="msg" size="60" />
+<input type="submit" value="보내기" />
+<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>로 로그인 함 / 갱신 주기: <span id="period">3000</span>ms</p>
 </form>
 
 <script type="text/javascript">
@@ -551,9 +531,12 @@ $('#say').submit(function(event) {
 	event.preventDefault()
 })
 </script>
+<?php else: ?>
+<p id="eol">* 로그의 끝입니다. *</p>
 <?php endif; ?>
+</div>
 
-<p>낚지가 기록합니다.</a></p>
+<a name="bottom"></a>
 </body>
 </html>
 <?php
