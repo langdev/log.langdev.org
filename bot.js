@@ -1,6 +1,7 @@
 var net = require('net'),
 	repl = require('repl'),
-	fs = require('fs')
+	fs = require('fs'),
+	io = require('socket.io').listen(6667);
 
 var port = 6666
 var host = 'irc.ozinger.org'
@@ -15,6 +16,9 @@ var actions = [
 	[/^:(.+?) 001/, function (stream) {
 		send_line(stream, 'JOIN ' + channels)
 	}],
+	[/PRIVMSG/, function () {
+		io.sockets.emit('update');
+    }],
 ]
 
 function zerofill(n) {
@@ -98,19 +102,9 @@ stream.on('data', function (data) {
 	})
 })
 
-// HTTP server
-
-var http = require('http'),
-	querystring = require('querystring')
-
-http.createServer(function (req, res) {
-	if (req.method == 'POST') {
-		req.setEncoding('utf8')
-		req.on('data', function (chunk) {
-			var POST = querystring.parse(chunk)
-			send_line(stream, 'PRIVMSG ' + channels + ' :<' + POST['nick'] + '> ' + POST['msg'])
-			res.writeHead(200)
-			res.end()
-		})
-	}
-}).listen(6667)
+io.sockets.on('connection', function (socket) {
+	socket.on('msg', function (data) {
+        send_line(stream, 'PRIVMSG ' + channels + ' :<' + data.nick + '> ' + data.msg)
+        io.sockets.emit('update')
+    });
+});

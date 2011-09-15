@@ -323,6 +323,7 @@ function print_header($title) {
 	<meta name="viewport" content="width=device-width" />
 	<link rel="stylesheet" href="/style.css?v2" type="text/css">
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+	<script type="text/javascript" src="/socket.io/socket.io.min.js"></script>
 </head>
 <body>
 <?php
@@ -431,14 +432,6 @@ for (var i = 0; i < cells.length; i++) {
 </html>
 
 <?php
-elseif ($path == 'say'):
-	$ctx = stream_context_create(array(
-		'http' => array(
-			'method' => 'POST',
-			'content' => "nick=$_SERVER[PHP_AUTH_USER]&msg=" . rawurlencode($_POST['msg']),
-		)
-	));
-	file_get_contents("http://localhost:6667/", false, $ctx);
 else:
 	$log = new Log(preg_replace('/^(\d{4})-(\d{2})-(\d{2})$/', '$1$2$3', $path));
 	if (!$log->available()) {
@@ -497,15 +490,23 @@ else:
 
 <?php if ($log->is_today()): ?>
 <form method="post" action="say" id="say">
-<p><input type="text" name="msg" id="msg" size="60" />
+<p>
+<input type="text" name="msg" id="msg" size="60" />
 <input type="submit" value="보내기" />
-<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>로 로그인 함 / 갱신 주기: <span id="period">3000</span>ms</p>
+<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>로 로그인 함
+</p>
 </form>
 
 <script type="text/javascript">
 var from = <?=$lines + 1?>;
-var interval = 3000;
-var seq = 0;
+var nickname = '<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>';
+
+var socket = io.connect('http://log.langdev.org:6667');
+
+socket.on('update', function () {
+	_update_log();
+});
+
 function _update_log() {
 	var _from = from;
 	$.get('?from=' + _from, function (data) {
@@ -514,19 +515,11 @@ function _update_log() {
 		$('#updates').append(data)
 		if (willScroll)
 			$(window).scrollTop($(document).height() + 100000)
-		$('#period').text(interval)
 	})
 }
-function update_log() {
-	_update_log()
-	window.setTimeout(update_log, interval)
-}
-window.setTimeout(update_log, interval)
 
 $('#say').submit(function(event) {
-	$.post($(this).attr('action'), $(this).serialize(), function() {
-		_update_log()
-	})
+	socket.emit('msg', {nick: nickname, msg: $('#msg').val()});
 	$('#msg').attr('value', '')
 	event.preventDefault()
 })
@@ -545,8 +538,7 @@ $('#say').submit(function(event) {
 		if (!empty($messages)) {
 			$lines = $messages[count($messages)-1]['no'] + 1;
 			print_lines($log, $messages);
-			$js = "from=$lines;interval=3000;";
-		} else $js = "interval=Math.min(10000, interval+100)";
-		echo "<script type='text/javascript'>$js</script>";
+			echo "<script>from=$lines</script>";
+		}
 	endif;
 endif;
