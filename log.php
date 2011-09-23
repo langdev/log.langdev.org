@@ -323,9 +323,20 @@ function print_header($title) {
 	<meta name="viewport" content="width=device-width" />
 	<link rel="stylesheet" href="/style.css?v2" type="text/css">
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
-	<script type="text/javascript" src="/socket.io/socket.io.min.js"></script>
+	<script type="text/javascript" src="http://log.langdev.org:8888/socket.io/socket.io.js"></script>
 </head>
 <body>
+<div class="langdev__nav">
+<div class="langdev__nav_inner">
+<h3><a href="http://langdev.org/">LangDev</a></h3>
+<ul>
+<li><a href="http://langdev.org/posts/">Forum</a></li>
+<li class="active"><a href="http://log.langdev.org/">Log</a></li>
+<li><a href="http://topics.langdev.org/">Topics</a></li>
+<li><a href="http://docs.langdev.org/">Docs</a></li>
+</ul>
+</div>
+</div>
 <?php
 }
 
@@ -501,7 +512,7 @@ else:
 var from = <?=$lines + 1?>;
 var nickname = '<?=htmlspecialchars($_SERVER['PHP_AUTH_USER'])?>';
 
-var socket = io.connect('http://log.langdev.org:6667');
+var socket = io.connect('http://log.langdev.org:8888');
 
 socket.on('update', function () {
 	_update_log();
