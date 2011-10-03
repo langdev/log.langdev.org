@@ -333,6 +333,7 @@ function print_header($title) {
 <li><a href="http://langdev.org/posts/">Forum</a></li>
 <li class="active"><a href="http://log.langdev.org/">Log</a></li>
 <li><a href="http://topics.langdev.org/">Topics</a></li>
+<li><a href="http://links.langdev.org/">Links</a></li>
 <li><a href="http://docs.langdev.org/">Docs</a></li>
 </ul>
 </div>
