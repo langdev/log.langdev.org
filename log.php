@@ -477,7 +477,7 @@ else:
 
 <h2><?=$log->title()?></h2>
 <p id="nav">
-	<a href="/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> &middot; <a href="/log/">오늘</a> &middot; <a href="/log/random">아무 날</a> / <a href="#bottom">맨 아래로 &darr;</a>
+	<a href="/log/<?=date('Y-m-d', strtotime('yesterday'))?>">어제</a> &middot; <a href="/log/">오늘</a> &middot; <a href="/log/random">아무 날</a> / <a href="http://links.langdev.org/<?=vsprintf('%04d/%02d/%02d', $log->parsed_date())?>">링크</a> / <a href="#bottom">맨 아래로 &darr;</a>
 </p>
 
 <form method="get" action="search" id="search">
