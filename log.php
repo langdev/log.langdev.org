@@ -164,7 +164,7 @@ class SearchQuery
 	function SearchQuery($keyword) {
 		$synonym = new Synonym();
 		$this->keyword = $keyword;
-		$this->words = $synonym->get($this->keyword);
+		$this->words = $synonym->get($keyword);
 	}
 
 	function perform() {
@@ -206,8 +206,9 @@ class SphinxSearchQuery
 	var $COUNT_PER_PAGE;
 
 	function SphinxSearchQuery($keyword) {
+		$synonym = new Synonym();
 		$this->keyword = $keyword;
-		$this->words = array($keyword);
+		$this->words = $synonym->get($keyword);
 		$this->offset = 0;
 		$this->message = "";
 		$this->COUNT_PER_PAGE = 100;
@@ -230,7 +231,6 @@ class SphinxSearchQuery
 		$client->SetConnectTimeout(1);
 		$client->SetArrayResult(true);
 		$client->SetWeights(array(100, 1));
-		$client->SetMatchMode(SPH_MATCH_ALL);
 
 		$client->SetSortMode(SPH_SORT_EXTENDED, $sortby);
 		//$client->SetSortMode(SPH_SORT_EXPR, $sortexpr);
@@ -238,7 +238,13 @@ class SphinxSearchQuery
 		$client->SetRankingMode($ranker);
 
 		// do query!!
-		$res = $client->Query($this->keyword, $index);
+		if (count($this->words) == 1) {
+			$client->SetMatchMode(SPH_MATCH_ALL);
+			$res = $client->Query($this->keyword, $index);
+		} else {
+			$client->SetMatchMode(SPH_MATCH_BOOLEAN);
+			$res = $client->Query(implode(' | ', $this->words), $index);
+		}
 
 		if ($res == false) {
 			$err = $client->GetLastError();
