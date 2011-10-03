@@ -1,4 +1,5 @@
 <?php
+$start_time = microtime(true);
 ini_set('display_errors', 'Off');
 require 'auth.php';
 require 'sphinx/sphinxapi-2.0.1-beta.php';
@@ -243,7 +244,7 @@ class SphinxSearchQuery
 			$res = $client->Query($this->keyword, $index);
 		} else {
 			$client->SetMatchMode(SPH_MATCH_BOOLEAN);
-			$res = $client->Query(implode(' | ', $this->words), $index);
+			$res = $client->Query('('.implode(') | (', $this->words).')', $index);
 		}
 
 		if ($res == false) {
@@ -253,7 +254,7 @@ class SphinxSearchQuery
 		else {
 			if (array_key_exists("matches", $res) and is_array($res["matches"])) {
 				$this->total = $res["total"];
-				$this->message = "총 $res[total]개의 로그가 검색되었습니다.";
+				$this->message = "$res[total]줄의 기록을 찾았습니다.";
 				foreach ($res["matches"] as $docinfo) {
 					$msg = array(
 						'no' => $docinfo['attrs']['no'],
@@ -264,11 +265,16 @@ class SphinxSearchQuery
 						'bot?' => $docinfo['attrs']['bot'],
 					);
 
-					$index = date('Ymd', $msg['time']);
-					if (array_key_exists($index, $results))
-						$results[$index][] = $msg;
-					else
-						$results[$index] = array($msg);
+                    foreach ($this->words as $word) {
+                        if (stripos($msg['text'], $word) !== FALSE) {
+                            $index = date('Ymd', $msg['time']);
+                            if (array_key_exists($index, $results))
+                                $results[$index][] = $msg;
+                            else
+                                $results[$index] = array($msg);
+                            break;
+                        }
+                    }
 				}
 			}
 			else {
@@ -287,7 +293,7 @@ class SphinxSearchQuery
 			if ($i == $this->offset)
 				$result .= $i . " ";
 			else
-				$result .= "<a href=\"?q=" . urlencode(h($this->keyword)) . "&offset=$i\">$i</a> ";
+				$result .= "<a href=\"?q=" . urlencode(h($this->keyword)) . "&amp;offset=$i\">$i</a> ";
 		}
 
 		return $result;
@@ -395,14 +401,11 @@ elseif ($path == 'search'):
 		$query = null;
 ?>
 <?php print_header("search" . ($query ? ": $query->keyword" : '')); ?>
-<h1>Log Search</h1>
-
-<form method="get" action="">
-	<p>어제까지의 기록을 검색합니다.</p>
-	<p>검색어: <input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" /></p>
-	<?php if ($query and $query->message): ?>
-	<p><?=$query->message?></p>
-	<?php endif; ?>
+<form method="get" action="" id="search-form">
+<p>
+	<input type="text" name="q" value="<?=h($query->keyword)?>" /> <input type="submit" value="찾기" />
+	<?php if ($query and $query->message): ?><?=$query->message?><?php endif; ?>
+</p>
 </form>
 
 <?php if ($query): ?>
@@ -446,6 +449,7 @@ for (var i = 0; i < cells.length; i++) {
 }
 </script>
 <?php endif; ?>
+<p><?=microtime(true) - $start_time?> msecs.</p>
 </body>
 </html>
 
@@ -546,6 +550,8 @@ $('#say').submit(function(event) {
 <p id="eol">* 로그의 끝입니다. *</p>
 <?php endif; ?>
 </div>
+
+<p><?=microtime(true) - $start_time?> msecs.</p>
 
 <a name="bottom"></a>
 </body>
