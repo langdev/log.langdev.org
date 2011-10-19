@@ -541,9 +541,11 @@ function _update_log() {
 }
 
 $('#say').submit(function(event) {
-	socket.emit('msg', {nick: nickname, msg: $('#msg').val()});
-	$('#msg').attr('value', '')
 	event.preventDefault()
+	var msg = $('#msg').val();
+	if (!msg) return;
+	socket.emit('msg', {nick: nickname, msg: msg});
+	$('#msg').attr('value', '')
 })
 </script>
 <?php else: ?>
