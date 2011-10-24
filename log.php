@@ -130,6 +130,10 @@ function group_messages($messages) {
 	return $groups;
 }
 
+function strlen_cmp($a, $b) {
+	return strlen($a) - strlen($b);
+}
+
 class Synonym
 {
 	var $dict;
@@ -140,6 +144,9 @@ class Synonym
 		while ($line = fgets($fp)) {
 			$line = trim($line);
 			$words = explode(' ', $line);
+			// longest word first for regex
+			usort($words, "strlen_cmp");
+			$words = array_reverse($words);
 			foreach ($words as $word) {
 				$dict[$word] = $words;
 			}
