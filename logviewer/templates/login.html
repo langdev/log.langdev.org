@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}login{% endblock %}
+
+{% block content %}
+<p>채널 로그를 보려면 로그인하세요.</p>
+
+{% if error %}
+<p>로그인에 실패했습니다. 아이디/암호를 다시 확인해주세요.</p>
+{% endif %}
+
+<form method="post" action="">
+<p><label for="username">아이디</label><br /><input type="text" name="username" id="username" /></p>
+<p><label for="password">암호</label><br /><input type="password" name="password" id="password" /></p>
+<p><input type="submit" value="로그인" /></p>
+</form>
+{% endblock %}

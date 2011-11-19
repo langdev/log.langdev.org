@@ -2,10 +2,15 @@ import os
 import re
 import time
 import codecs
+import hmac
+import json
+import hashlib
 import datetime
+import functools
 import itertools
 import pytz
-from flask import Flask, request, redirect, url_for, render_template
+import requests
+from flask import Flask, request, redirect, session, url_for, render_template
 
 app = Flask(__name__)
 app.config.from_envvar('LOGVIEWER_SETTINGS')
@@ -85,20 +90,20 @@ import sphinxapi
 
 def expand_synonyms(query):
     d = {}
-    with codecs.open('synonyms', encoding='utf-8') as fp:
+    with codecs.open(app.config['SYNONYM_PATH'], encoding='utf-8') as fp:
         for line in fp:
-        	words = line.rstrip().split(' ')
-        	words.sort(key=len, reverse=True)
-        	for word in words:
-        		d[word] = words
+            words = line.rstrip().split(' ')
+            words.sort(key=len, reverse=True)
+            for word in words:
+                d[word] = words
 
     terms = query.split()
     expanded_terms = []
     for term in terms:
-    	if term in d:
-    		expanded_terms.append('(' + ')|('.join(d[term]) + ')')
-    	else:
-    		expanded_terms.append('(' + term + ')')
+        if term in d:
+            expanded_terms.append('(' + ')|('.join(d[term]) + ')')
+        else:
+            expanded_terms.append('(' + term + ')')
     return ' '.join(expanded_terms)
 
 def sphinx_search(query, offset, count):
@@ -115,7 +120,7 @@ def sphinx_search(query, offset, count):
         if 'matches' in result:
             messages = {}
             for msg in result['matches']:
-            	attrs = msg['attrs']
+                attrs = msg['attrs']
                 t = time.localtime(attrs['time'])
                 key = time.strftime('%Y%m%d', t)
                 if key not in messages:
@@ -156,6 +161,48 @@ class Log(object):
     def yesterday(self):
         return Log(self.date - datetime.timedelta(days=1))
 
+def langdev_sso_call(user_id, user_pass):
+    def hmac_sha1(value):
+        hash = hmac.new(app.config['LANGDEV_SECRET_KEY'], value, hashlib.sha1)
+        return hash.hexdigest()
+    def hmac_pass(u_pass):
+        return hmac_sha1(hashlib.md5(u_pass).hexdigest())
+
+    auth_url = 'http://langdev.org/apps/%s/sso/%s' % (app.config['LANGDEV_APP_KEY'], user_id)
+    auth_data = {'password': hmac_pass(user_pass) }
+    result = requests.post(auth_url, data=auth_data, headers={'Accept': 'application/json'})
+
+    if result.status_code == requests.codes.ok:
+        return json.loads(result.content)
+    else:
+        return False
+
+def login_required(f):
+    @functools.wraps(f)
+    def _wrapped(*args, **kwargs):
+        if 'username' not in session:
+        	return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return _wrapped
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = False
+
+    if request.method == 'POST':
+    	if langdev_sso_call(request.form['username'], request.form['password']):
+    		session['username'] = request.form['username']
+    		return redirect(request.args.get('next', url_for('index')))
+    	else:
+    		error = True
+
+    return render_template('login.html', error=error)
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    del session['username']
+    return redirect(url_for('login'))
+
 @app.route('/')
 def index():
     today = Log.today()
@@ -169,6 +216,7 @@ def random():
     return redirect(url_for('log', date=rand))
 
 @app.route('/log/<date>')
+@login_required
 def log(date):
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     log = Log(date)
@@ -187,10 +235,11 @@ def log(date):
         if truncated:
             options['recent'] = recent
     messages = group_messages(messages, app.config['GROUP_THRES'])
-    return render_template('log.html', today=Log.today(), log=log, messages=messages, options=options, last_no=last_no, username='ditto')
+    return render_template('log.html', today=Log.today(), log=log, messages=messages, options=options, last_no=last_no, username=session['username'])
 
 @app.route('/atom')
 def atom():
+    # TODO: auth
     # TODO: omit last group
     log = Log.today()
     messages = group_messages(log.get_messages(), app.config['GROUP_THRES'])
@@ -198,6 +247,7 @@ def atom():
     return render_template('atom_feed.xml', log=log, messages=messages)
 
 @app.route('/search')
+@login_required
 def search():
     query = request.args['q']
     offset = int(request.args.get('offset', '0'))
@@ -209,4 +259,4 @@ def search():
     return render_template('search_result.html', query=query, total=result['total'], result=result['messages'], pages=pages, query_pattern=query_pattern)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')
