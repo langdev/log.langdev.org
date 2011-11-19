@@ -1,0 +1,6 @@
+DEBUG = True
+LOG_DIR = './logs'
+SYNONYM_PATH = './synonyms'
+GROUP_THRES = 900 #seconds
+LOG_TIMEZONE = 'Asia/Seoul'
+SEARCH_RESULTS_PER_PAGE = 100

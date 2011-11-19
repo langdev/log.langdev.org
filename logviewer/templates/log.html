@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ log.date }}{% endblock %}
+
+{% block content %}
+<div id="navbar">
+
+<h2>{{ log.date }}</h2>
+<p id="nav">
+	<a href="{{ today.yesterday.url }}">어제</a> &middot; <a href="{{ today.url }}">오늘</a> &middot; <a href="{{ url_for('random') }}">아무 날</a> / <a href="http://links.langdev.org/{{ log.date.strftime('%Y/%m/%d') }}">링크</a> / <a href="#bottom">맨 아래로 &darr;</a>
+</p>
+
+<form method="get" action="{{ url_for('search') }}" id="search">
+<p><input type="text" name="q" value="" /> <input type="submit" value="찾기" /> / <a href="{{ url_for('atom') }}">Atom 피드</a></p>
+</form>
+</div>
+
+<div id="content">
+{% if options.recent %}
+<p id="only-recent">최근 대화만 표시하고 있습니다. <a href="{{ log.url }}">전체 보기</a> / <a href="{{ log.url }}?recent={{ options.recent + 30 }}">30분 더 보기</a></p>
+{% endif %}
+
+{% from 'macros.html' import message_rows %}
+<table>
+{% for group in messages %}
+<tbody>{{ message_rows(group) }}</tbody>
+{% endfor %}
+<tbody id="updates">
+</tbody>
+</table>
+
+{% if log.is_today %}
+<form method="post" action="say" id="say">
+<p>
+<input type="text" name="msg" id="msg" size="60" />
+<input type="submit" value="보내기" />
+{{ username }}로 로그인 함
+</p>
+</form>
+
+<script type="text/javascript">
+var from = {{ last_no + 1 }};
+var nickname = '{{ username }}';
+
+var socket = io.connect('http://log.langdev.org:8888');
+
+socket.on('update', function () {
+	_update_log();
+});
+
+function _update_log() {
+	var _from = from;
+	$.get('?from=' + _from, function (data) {
+		if (from > _from) return;
+		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height() + 20;
+		$('#updates').append(data)
+		if (willScroll)
+			$(window).scrollTop($(document).height() + 100000)
+	})
+}
+
+$('#say').submit(function(event) {
+	event.preventDefault()
+	var msg = $('#msg').val();
+	if (!msg) return;
+	socket.emit('msg', {nick: nickname, msg: msg});
+	$('#msg').attr('value', '')
+})
+</script>
+{% else %}
+<p id="eol">* 로그의 끝입니다. *</p>
+{% endif %}
+{% endblock %}

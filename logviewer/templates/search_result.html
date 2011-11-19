@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}search: {{ query }}{% endblock %}
+
+{% macro page_nav(pages) %}
+<p>
+{% for page in pages %}
+{% if page.current %}
+<strong>{{ page.number }}</strong>
+{% else %}
+<a href="{{ page.url }}">{{ page.number }}</a>
+{% endif %}
+{% endfor %}
+</p>
+{% endmacro %}
+
+{% block content %}
+<div id="content">
+<form method="get" action="" id="search-form">
+<p>
+	<input type="text" name="q" value="{{ query }}" /> <input type="submit" value="찾기" />
+</p>
+<p>검색 결과가 {{ total }}개 있습니다.</p>
+{{ page_nav(pages) }}
+</form>
+
+{% from 'macros.html' import message_rows %}
+{% for log, messages in result %}
+<div class="day">
+	<h2><a href="{{ log.url }}">{{ log.date }}</a></h2>
+	<table>{{ message_rows(messages) }}</table>
+</div>
+{% endfor %}
+</div>
+
+{{ page_nav(pages) }}
+
+<script type="text/javascript">
+var re = /{{ query_pattern }}/gi;
+var repl = "<span class=\"highlight\">$&</span>"
+var cells = document.getElementsByTagName('td')
+for (var i = 0; i < cells.length; i++) {
+	var cell = cells[i]
+	if (cell.className == 'message' && cell.innerHTML.match(re))
+	{
+		var content = []
+		for (var j = 0; j < cell.childNodes.length; j++)
+		{
+			var node = cell.childNodes[j]
+			if (node.nodeType == 3)
+				content.push(node.nodeValue.replace(re, repl))
+			else if (node.nodeType == 1 && node.tagName == 'A') {
+				content.push('<a href="' + node.href + '">')
+				content.push(node.innerHTML.replace(re, repl))
+				content.push('</a>')
+			}
+		}
+		cell.innerHTML = content.join('')
+	}
+}
+</script>
+{% endblock %}

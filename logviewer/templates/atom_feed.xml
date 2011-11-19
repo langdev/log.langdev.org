@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Log of #langdev</title>
+    <link href="http://log.langdev.org/" />
+{% from 'macros.html' import message_rows %}
+{% for group in messages %}
+{% if loop.first %}
+    <updated>{{ group[-1].time.isoformat() }}</updated>
+{% endif %}
+    <entry>
+        <title>{{ log.date }} #{{ loop.length - loop.index0 }}</title>
+        <link href="{{ url_for('log', date=log.date, _external=True) }}#line{{ group[0].no }}" />
+        <updated>{{ group[-1].time.isoformat() }}</updated>
+        <content type="xhtml">
+            <table xmlns="http://www.w3.org/1999/xhtml">
+                {{ message_rows(group) }}
+            </table>
+        </content>
+    </entry>
+{% endfor %}
+</feed>
