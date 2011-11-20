@@ -53,7 +53,7 @@ def parse_log(fp, start=None):
                 nick=nick, text=text, is_bot=is_bot)
         elif m.group('dir') == '>>>' and start is None \
             and m.group('data').startswith('JOIN #langdev'):
-            yield dict(type='join', time=extract_time(m), is_bot=True)
+            yield dict(type='join', time=extract_time(m), is_bot=True, no=-1)
 
 def filter_recent(iterable, minutes):
     now = localize(datetime.datetime.now())
@@ -215,7 +215,7 @@ def random():
     rand = datetime.date.today() - datetime.timedelta(days=ago)
     return redirect(url_for('log', date=rand))
 
-@app.route('/log/<date>')
+@app.route('/<date>')
 @login_required
 def log(date):
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
