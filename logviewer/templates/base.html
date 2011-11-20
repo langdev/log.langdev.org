@@ -24,5 +24,25 @@
 {% block content %}
 {% endblock %}
 <a name="bottom"></a>
+<script type="text/javascript">
+function apply_noreferrer() {
+    $('.message a:not([rel~="noreferrer"])').each(function(i, e) {
+        e.setAttribute('rel', 'noreferrer '  + e.getAttribute('rel'));
+        var href = e.getAttribute('href');
+        if (!href || href.match(/^http:\/\/fw\.mearie\.org\/./)) {
+            return;
+        } else if (href.match(/^http:/)) {
+            href = href.substr(7);
+        } else if (href.match(/^https:/)) {
+            href = '*' + href.substr(8);
+        } else {
+            return;
+        }
+        if (href.match(/^[^\/]+$/)) href += '/';
+        e.setAttribute('href', 'http://fw.mearie.org/' + href);
+    });
+}
+$(apply_noreferrer);
+</script>
 </body>
 </html>

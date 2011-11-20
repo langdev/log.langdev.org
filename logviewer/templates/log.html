@@ -55,6 +55,7 @@ function _update_log() {
 		if (from > _from) return;
 		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height() + 20;
 		$('#updates').append(data)
+        apply_noreferrer();
 		if (willScroll)
 			$(window).scrollTop($(document).height() + 100000)
 	})
