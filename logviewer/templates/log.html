@@ -15,6 +15,14 @@
 </form>
 </div>
 
+<div id="flags">
+<h3>건너뛰기</h3>
+<ul></ul>
+
+<button id="toggle-flag-mode">깃발 꽂기</button>
+<p id="flag-mode-desc" style="display: none">깃발을 꽂기 원하는 줄의 시간 링크를 누르세요.</p>
+</div>
+
 <div id="content">
 {% if options.recent %}
 <p id="only-recent">최근 대화만 표시하고 있습니다. <a href="{{ log.url }}">전체 보기</a> / <a href="{{ log.url }}?recent={{ options.recent + 30 }}">30분 더 보기</a></p>
@@ -72,4 +80,6 @@ $('#say').submit(function(event) {
 {% else %}
 <p id="eol">* 로그의 끝입니다. *</p>
 {% endif %}
+
+<script type="text/javascript" src="{{ url_for('static', filename='flag.js') }}"></script>
 {% endblock %}

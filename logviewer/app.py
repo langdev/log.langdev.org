@@ -8,9 +8,12 @@ import hashlib
 import datetime
 import functools
 import itertools
+import sqlite3
+from contextlib import closing
+
 import pytz
 import requests
-from flask import Flask, request, redirect, session, url_for, render_template
+from flask import Flask, request, redirect, session, url_for, render_template, jsonify
 
 app = Flask(__name__)
 app.config.from_envvar('LOGVIEWER_SETTINGS')
@@ -257,6 +260,30 @@ def search():
     page = offset / per_page
     pages = [{'url': url_for('search', q=query, offset=n * per_page), 'number': n + 1, 'current': n == page} for n in xrange(result['total'] / per_page)]
     return render_template('search_result.html', query=query, total=result['total'], result=result['messages'], pages=pages, query_pattern=query_pattern)
+
+def connect_db():
+    conn = sqlite3.connect(app.config['FLAG_DB'])
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@app.route('/<date>/flags')
+@login_required
+def flags(date):
+    with closing(connect_db()) as db:
+        c = db.cursor()
+        c.execute('select * from flags where date=? order by line', (date, ))
+        return json.dumps([dict(row) for row in c])
+
+@app.route('/<date>/<line>/flags', methods=['POST'])
+@login_required
+def flag(date, line):
+    db = connect_db()
+    c = db.cursor()
+    c.execute('insert into flags (date, time, line, title, user) values(?, ?, ?, ?, ?)', (date, request.form['time'], int(line), request.form['title'], session['username']))
+    db.commit()
+    id = c.lastrowid
+    db.close()
+    return str(id)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

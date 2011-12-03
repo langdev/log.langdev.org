@@ -7,3 +7,4 @@ SEARCH_RESULTS_PER_PAGE = 100
 SECRET_KEY = 'secret' # Recommend os.urandom(24)
 LANGDEV_APP_KEY = ''
 LANGDEV_SECRET_KEY = ''
+FLAG_DB = 'flag.db'
