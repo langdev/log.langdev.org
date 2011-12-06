@@ -13,6 +13,7 @@ from contextlib import closing
 
 import pytz
 import requests
+import flask
 from flask import Flask, request, redirect, session, url_for, render_template, jsonify
 
 app = Flask(__name__)
@@ -227,7 +228,10 @@ def log(date):
         start = int(request.args['from'])
     else:
         start = None
-    messages = list(log.get_messages(start=start))
+    try:
+        messages = list(log.get_messages(start=start))
+    except IOError:
+        flask.abort(404)
     last_no = max(msg['no'] for msg in messages)
     if request.is_xhr:
         return render_template('_messages.html', log=log, messages=messages, last_no=last_no)
