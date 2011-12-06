@@ -28,7 +28,7 @@
 {% for log, messages in result %}
 <div class="day">
 	<h2><a href="{{ log.url }}">{{ log.date }}</a></h2>
-	<table>{{ message_rows(messages) }}</table>
+	<table>{{ message_rows(messages, log.url) }}</table>
 </div>
 {% endfor %}
 </div>
