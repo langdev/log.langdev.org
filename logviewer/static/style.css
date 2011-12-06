@@ -136,3 +136,13 @@ body {
 .langdev__nav_inner li:hover a, .langdev__nav_inner li.active a {
     color: white;
 }
+
+tr.color-0 .nickname { color: hsl(0, 90%, 35%); }
+tr.color-1 .nickname { color: hsl(40, 90%, 35%); }
+tr.color-2 .nickname { color: hsl(80, 90%, 35%); }
+tr.color-3 .nickname { color: hsl(120, 90%, 35%); }
+tr.color-4 .nickname { color: hsl(160, 90%, 35%); }
+tr.color-5 .nickname { color: hsl(200, 90%, 35%); }
+tr.color-6 .nickname { color: hsl(240, 90%, 35%); }
+tr.color-7 .nickname { color: hsl(280, 90%, 35%); }
+tr.color-8 .nickname { color: hsl(320, 90%, 35%); }
