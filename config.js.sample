@@ -1,0 +1,9 @@
+module.exports = {
+  host: 'irc.ozinger.org',
+  port: 6666,
+  nickname: '산낚지',
+  channels: '#langdev',
+  logPath: 'logs/langdev.log',
+
+  links_api_key: ''
+};

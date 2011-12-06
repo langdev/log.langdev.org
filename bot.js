@@ -8,11 +8,11 @@ var net = require('net'),
 
 var config = require('./config.js');
 
-var port = 6666
-var host = 'irc.ozinger.org'
-var nickname = '산낚지'
-var channels = '#langdev'
-var logPath = 'logs/langdev.log'
+var port = config.port,
+    host = config.host,
+    nickname = config.nickname,
+    channels = config.channels,
+    logPath = config.logPath;
 
 var md5 = function(val) {
     return crypto.createHash('md5').update(val).digest('hex');
