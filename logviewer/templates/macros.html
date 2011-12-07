@@ -1,7 +1,7 @@
 {% macro message_rows(messages, log_url='') %}
 {% for msg in messages %}
 {% if msg.type == 'privmsg' %}
-    <tr id="line{{ msg.no }}">
+    <tr id="line{{ msg.no }}"{% if not msg.is_bot %} class="color-{{ msg.nick|hash(9) }}"{% endif %}>
         <td class="time" title="{{ msg.time }}"><a href="{{ log_url }}#line{{ msg.no }}">{{ msg.time.strftime("%H:%M:%S") }}</a></td>
         <td class="nickname"><i>&lt;</i>{% if msg.is_bot %}<strong>낚지</strong>{% else %}{{ msg.nick }}{% endif %}<i>&gt;</i></td>
         <td class="message">{{ msg.text|urlize(nofollow=True) }}</td>

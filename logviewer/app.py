@@ -181,6 +181,14 @@ def langdev_sso_call(user_id, user_pass):
     else:
         return False
 
+def hashed(value, limit=0):
+    hashed_value = hash(value)
+    if limit:
+        return hashed_value % limit
+    else:
+        return hashed_value
+app.jinja_env.filters['hash'] = hashed
+
 def login_required(f):
     @functools.wraps(f)
     def _wrapped(*args, **kwargs):
