@@ -181,16 +181,22 @@ def langdev_sso_call(user_id, user_pass):
     else:
         return False
 
-def hashed(value, limit=0):
+def canonical(value):
+    value = value.lower()
     m = re.search(r'^[\^\|_]*([^\^\|_]*).*$', value)
     if not m is None:
-        value = m.group(1)
+        return m.group(1)
+    else:
+        return value
+
+def hashed(value, limit=0):
     hashed_value = hash(value)
     if limit:
         return hashed_value % limit
     else:
         return hashed_value
-app.jinja_env.filters['hash'] = hashed
+
+app.jinja_env.filters.update(canonical=canonical, hash=hashed)
 
 def login_required(f):
     @functools.wraps(f)
