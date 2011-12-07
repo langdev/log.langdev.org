@@ -1,7 +1,7 @@
 (function ($) {
 
 var content = $('#content');
-content.delegate('td.nickname', 'click', function (e) {
+content.delegate('td.nickname > span', 'click', function (e) {
   var self = $(this),
       row = self.closest('tr'),
       userid = row.data('userid'),
