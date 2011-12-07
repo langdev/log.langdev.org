@@ -1,8 +1,16 @@
 module.exports = {
+  // 로깅할 IRC 네트워크의 주소와 포트 번호, 채널명을 지정합니다.
   host: 'irc.ozinger.org',
   port: 6666,
-  nickname: '산낚지',
   channels: '#langdev',
+
+  // 로그 봇의 닉네임을 설정합니다.
+  // 이미 존재하는 다른 사용자나 봇의 닉네임과 충돌하지 않게 정하십시오.
+  nickname: '산낚지',
+
+  // 로그 파일의 경로를 지정합니다. 로그 뷰어 쪽의 설정과 같은 폴더를 지정하되,
+  // 뒤쪽의 '/langdev.org' 부분은 남겨두십시오. 로그 뷰어에 해당 파일의 이름이
+  // 하드코딩되어 있기 때문인데, 차후 개선해야 할 점입니다.
   logPath: 'logs/langdev.log',
 
   links_api_key: ''
