@@ -137,6 +137,7 @@ body {
     color: white;
 }
 
+/* http://jsbin.com/ijanas */
 tr.color-0 .nickname { color: hsl(0, 90%, 35%); }
 tr.color-1 .nickname { color: hsl(36, 90%, 35%); }
 tr.color-2 .nickname { color: hsl(72, 90%, 35%); }
