@@ -1,10 +1,11 @@
 (function ($) {
 
 var content = $('#content');
-content.delegate('tr', 'click', function (e) {
+content.delegate('td.nickname', 'click', function (e) {
   var self = $(this),
-      userid = self.data('userid'),
-      selected = self.hasClass('selected');
+      row = self.closest('tr'),
+      userid = row.data('userid'),
+      selected = row.hasClass('selected');
   content.find('tr').removeClass('selected');
   if (!selected) {
     content.find('tr[data-userid="' + userid +'"]')

@@ -184,7 +184,7 @@ def langdev_sso_call(user_id, user_pass):
 def canonical(value):
     value = value.lower()
     m = re.search(r'^[\^\|_]*([^\^\|_]*).*$', value)
-    if not m is None:
+    if m is not None:
         return m.group(1)
     else:
         return value
