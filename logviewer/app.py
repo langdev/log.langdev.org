@@ -182,6 +182,9 @@ def langdev_sso_call(user_id, user_pass):
         return False
 
 def hashed(value, limit=0):
+    m = re.search(r'^[\^\|_]*([^\^\|_]*).*$', value)
+    if not m is None:
+        value = m.group(1)
     hashed_value = hash(value)
     if limit:
         return hashed_value % limit
