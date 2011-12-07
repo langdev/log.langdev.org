@@ -138,11 +138,22 @@ body {
 }
 
 tr.color-0 .nickname { color: hsl(0, 90%, 35%); }
-tr.color-1 .nickname { color: hsl(40, 90%, 35%); }
-tr.color-2 .nickname { color: hsl(80, 90%, 35%); }
-tr.color-3 .nickname { color: hsl(120, 90%, 35%); }
-tr.color-4 .nickname { color: hsl(160, 90%, 35%); }
-tr.color-5 .nickname { color: hsl(200, 90%, 35%); }
-tr.color-6 .nickname { color: hsl(240, 90%, 35%); }
-tr.color-7 .nickname { color: hsl(280, 90%, 35%); }
-tr.color-8 .nickname { color: hsl(320, 90%, 35%); }
+tr.color-1 .nickname { color: hsl(36, 90%, 35%); }
+tr.color-2 .nickname { color: hsl(72, 90%, 35%); }
+tr.color-3 .nickname { color: hsl(108, 90%, 35%); }
+tr.color-4 .nickname { color: hsl(144, 90%, 35%); }
+tr.color-5 .nickname { color: hsl(180, 90%, 35%); }
+tr.color-6 .nickname { color: hsl(216, 90%, 35%); }
+tr.color-7 .nickname { color: hsl(252, 90%, 35%); }
+tr.color-8 .nickname { color: hsl(288, 90%, 35%); }
+tr.color-9 .nickname { color: hsl(324, 90%, 35%); }
+tr.color-0.selected  { background-color: hsl(18, 85%, 93%); }
+tr.color-1.selected  { background-color: hsl(54, 85%, 93%); }
+tr.color-2.selected  { background-color: hsl(90, 85%, 93%); }
+tr.color-3.selected  { background-color: hsl(126, 85%, 93%); }
+tr.color-4.selected  { background-color: hsl(162, 85%, 93%); }
+tr.color-5.selected  { background-color: hsl(198, 85%, 93%); }
+tr.color-6.selected  { background-color: hsl(234, 85%, 93%); }
+tr.color-7.selected  { background-color: hsl(270, 85%, 93%); }
+tr.color-8.selected  { background-color: hsl(306, 85%, 93%); }
+tr.color-9.selected  { background-color: hsl(342, 85%, 93%); }
