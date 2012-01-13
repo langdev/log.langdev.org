@@ -36,7 +36,7 @@ function redraw_flags() {
 	$('#flags ul').html('');
 	if (flags.length > 0)
         $.each(flags, function (i, item) {
-            $('#flags ul').append('<li>' + item.time + ' <a href="#line' + item.line + '">' + item.title + '</a></li>');
+            $('#flags ul').append('<li>' + item.time + ' <a href="' + location.pathname + '#line' + item.line + '">' + item.title + '</a></li>');
         });
     else
     	$('#flags ul').html('<li>아직 깃발이 하나도 없네요.</li>');

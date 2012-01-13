@@ -13,6 +13,10 @@ code { font-family: Bitstream Vera Sans Mono, Consolas, monospace; }
 form p { margin: 0; text-indent: 0; }
 table { border-collapse: collapse; margin-bottom: 0; width: 100%; }
 tbody { border-bottom: 2px solid #999; }
+tr {
+	-webkit-transition: 0.1s background-color ease-in;
+	-moz-transition: 0.1s background-color ease-in;
+}
 td { padding: 0.5em 1em; border-bottom: 1px solid #ddd; line-height: 1.4; }
 .time { font-size: 0.85em; color: #999; }
 .time a { color: #999; text-decoration: none; }
@@ -35,6 +39,7 @@ a.flaggable { font-weight: bold; color: #7a0; }
 
 @media only screen and (max-device-width: 480px) {
     #navbar { position: static; padding: 10px; text-align: center; }
+    #flags { position: static; }
     .time { display: none; }
     #msg { width: 100%; }
 }

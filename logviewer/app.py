@@ -9,6 +9,7 @@ import datetime
 import functools
 import itertools
 import sqlite3
+import logging
 from contextlib import closing
 
 import pytz
@@ -18,6 +19,8 @@ from flask import Flask, request, redirect, session, url_for, render_template, j
 
 app = Flask(__name__)
 app.config.from_envvar('LOGVIEWER_SETTINGS')
+
+access_log = codecs.open(app.config['ACCESS_LOG_PATH'], 'a', encoding='utf-8')
 
 LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*? (?P<dir><<<|>>>) (?P<data>.+)$')
 PRIVMSG_PATTERN = re.compile('^(?::(?P<nick>.+?)!.+? )?PRIVMSG #.+? :(?P<text>.+)$')
@@ -79,8 +82,9 @@ def filter_recent(iterable, minutes):
 
 def group_messages(messages, thres):
     it = iter(messages)
-    prev_time = next(it)['time']
-    group = []
+    msg = next(it)
+    prev_time = msg['time']
+    group = [msg]
     for msg in it:
         if (msg['time'] - prev_time).seconds > thres:
             yield group
@@ -213,6 +217,8 @@ def login():
     if request.method == 'POST':
     	if langdev_sso_call(request.form['username'], request.form['password']):
     		session['username'] = request.form['username']
+    		access_log.write(u'%s logged in\n' % session['username'])
+    		access_log.flush()
     		return redirect(request.args.get('next', url_for('index')))
     	else:
     		error = True

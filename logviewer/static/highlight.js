@@ -1,9 +1,8 @@
 (function ($) {
 
 var content = $('#content');
-content.delegate('td.nickname > span', 'click', function (e) {
-  var self = $(this),
-      row = self.closest('tr'),
+content.delegate('.nickname', 'click', function (e) {
+  var row = $(this).parent(),
       userid = row.data('userid'),
       selected = row.hasClass('selected');
   content.find('tr').removeClass('selected');
