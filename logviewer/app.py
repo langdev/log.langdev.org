@@ -217,7 +217,7 @@ def login():
     if request.method == 'POST':
     	if langdev_sso_call(request.form['username'], request.form['password']):
     		session['username'] = request.form['username']
-    		access_log.write(u'%s logged in\n' % session['username'])
+    		access_log.write(u'[%s] %s logged in\n' % (datetime.datetime.now().isoformat(), session['username']))
     		access_log.flush()
     		return redirect(request.args.get('next', url_for('index')))
     	else:
