@@ -7,7 +7,6 @@ import json
 import hashlib
 import datetime
 import functools
-import itertools
 import sqlite3
 import logging
 from contextlib import closing
@@ -15,7 +14,7 @@ from contextlib import closing
 import pytz
 import requests
 import flask
-from flask import Flask, request, redirect, session, url_for, render_template, jsonify
+from flask import Flask, request, redirect, session, url_for, render_template
 
 app = Flask(__name__)
 app.config.from_envvar('LOGVIEWER_SETTINGS')
