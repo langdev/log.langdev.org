@@ -9,6 +9,9 @@ DEBUG = True
 LOG_DIR = os.path.abspath('../logs')
 SYNONYM_PATH = os.path.abspath('../synonyms')
 
+# 로그 뷰어에 접속하는 사람들의 접속 로그를 기록할 파일의 경로를 지정합니다.
+ACCESS_LOG_PATH = os.path.abspath('../access_log.txt')
+
 GROUP_THRES = 900 #seconds
 LOG_TIMEZONE = 'Asia/Seoul'
 SEARCH_RESULTS_PER_PAGE = 100
