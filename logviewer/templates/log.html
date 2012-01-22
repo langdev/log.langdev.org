@@ -31,6 +31,7 @@
 {% from 'macros.html' import message_rows %}
 <table>
 {% for group in messages %}
+<thead><tr><td colspan="3" class="time-divider">{{ group[0].time.strftime("%H:%M") }}&ndash;</td></tr></thead>
 <tbody>{{ message_rows(group) }}</tbody>
 {% endfor %}
 <tbody id="updates">
@@ -38,7 +39,11 @@
 </table>
 
 {% if log.is_today %}
-<form method="post" action="say" id="say">
+<div id="enable-chat">
+<a href="#">대화 시작</a>
+</div>
+
+<form method="post" action="say" id="say" style="display: none">
 <p>
 <input type="text" name="msg" id="msg" size="60" />
 <input type="submit" value="보내기" />
@@ -51,11 +56,23 @@
 var from = {{ last_no + 1 }};
 var nickname = '{{ username }}';
 
-var socket = io.connect('http://log.langdev.org:8888');
+var socket;
 
-socket.on('update', function () {
-	_update_log();
+$('#enable-chat a').click(function() {
+	start_chat();
+	return false;
 });
+
+function start_chat() {
+	$('#enable-chat').slideUp();
+	$('#say').slideDown();
+
+    socket = io.connect('http://log.langdev.org:8888');
+
+    socket.on('update', function () {
+        _update_log();
+    });
+}
 
 function _update_log() {
 	var _from = from;

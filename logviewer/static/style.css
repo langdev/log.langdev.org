@@ -12,16 +12,16 @@ code { font-family: Bitstream Vera Sans Mono, Consolas, monospace; }
 #nav a:hover { background-color: transparent; }
 form p { margin: 0; text-indent: 0; }
 table { border-collapse: collapse; margin-bottom: 0; width: 100%; }
-tbody { border-bottom: 2px solid #999; }
 tr {
 	-webkit-transition: 0.1s background-color ease-in;
 	-moz-transition: 0.1s background-color ease-in;
 }
 td { padding: 0.5em 1em; border-bottom: 1px solid #ddd; line-height: 1.4; }
+.time-divider { font-weight: bold; font-size: 1.1em; border-bottom: 2px solid #999; padding-top: 1em; }
 .time { font-size: 0.85em; color: #999; }
 .time a { color: #999; text-decoration: none; }
 .time a:hover { background-color: #ccc; color: #fff; }
-.nickname { font-size: 0.9em; text-align: right; }
+.nickname { font-size: 0.9em; text-align: right; padding-right: 0; }
 .link { border: 1px solid #ddd; background-color: #f8f8f8; padding: 0.5em; margin-bottom: 2em; }
 .new { font-size: xx-small; vertical-align: super; color: #000; }
 .highlight { background-color: #ff0; }
@@ -30,6 +30,8 @@ i { font-size: 0; color: transparent; }
 #navbar { position: fixed; top: 0; right: 0; background-color: #eee; box-shadow: 0px 2px 5px #888; padding: 10px 20px; opacity: 0.8; }
 #navbar h2 { margin: 0; }
 #only-recent { padding: 10px 20px; background-color: #ffc; margin: 0; border-bottom: 1px solid #ccc; }
+#enable-chat a { padding: 15px; font-size: 1.1em; text-align: center; display: block; background-color: #eee; }
+#enable-chat a:hover { background-color: #ddd; }
 #say { padding: 10px; font-size: 0.9em; color: #333; background-color: #eee; }
 #eol { text-align: center; }
 #flags { position: fixed; right: 0; bottom: 0; margin: 10px; background-color: #fff; width: 280px; padding: 10px; border: 1px solid #000; }
@@ -38,9 +40,11 @@ i { font-size: 0; color: transparent; }
 a.flaggable { font-weight: bold; color: #7a0; }
 
 @media only screen and (max-device-width: 480px) {
-    #navbar { position: static; padding: 10px; text-align: center; }
-    #flags { position: static; }
+    #navbar { position: static; padding: 10px; text-align: center; box-shadow: none; }
+    #flags { position: static; border: none; margin: 0; width: 100%; }
     .time { display: none; }
+    .nickname, .message { padding-left: 5px; }
+    .message { word-wrap: break-word; }
     #msg { width: 100%; }
 }
 
