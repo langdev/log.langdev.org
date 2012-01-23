@@ -26,24 +26,35 @@
 {% endblock %}
 <a name="bottom"></a>
 <script type="text/javascript">
-function apply_noreferrer() {
-    $('.message a:not([rel~="noreferrer"])').each(function(i, e) {
-        e.setAttribute('rel', 'noreferrer '  + e.getAttribute('rel'));
-        var href = e.getAttribute('href');
-        if (!href || href.match(/^http:\/\/fw\.mearie\.org\/./)) {
-            return;
-        } else if (href.match(/^http:/)) {
-            href = href.substr(7);
-        } else if (href.match(/^https:/)) {
-            href = '*' + href.substr(8);
-        } else {
-            return;
-        }
-        if (href.match(/^[^\/]+$/)) href += '/';
-        e.setAttribute('href', 'http://fw.mearie.org/' + href);
+function apply_noreferrer(element) {
+    $(element).find('a:not([rel~="noreferrer"])').each(function(i, e) {
+        e.setAttribute('rel', 'noreferrer external '  + e.getAttribute('rel'));
     });
 }
-$(apply_noreferrer);
+
+function meariefy(href) {
+    if (!href || href.match(/^http:\/\/fw\.mearie\.org\/./)) {
+        return href;
+    } else if (href.match(/^http:/)) {
+        href = href.substr(7);
+    } else if (href.match(/^https:/)) {
+        href = '*' + href.substr(8);
+    } else {
+        return href;
+    }
+    if (href.match(/^[^\/]+$/)) {
+        href += '/';
+    }
+    return 'http://fw.mearie.org/' + href;
+}
+
+$(function () {
+    apply_noreferrer('.message');
+    $('table').on('click', '.message a[rel~="external"]', function (event) {
+        window.open(meariefy(this.getAttribute('href')));
+        event.preventDefault();
+    });
+});
 </script>
 </body>
 </html>

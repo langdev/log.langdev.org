@@ -75,15 +75,20 @@ function start_chat() {
 }
 
 function _update_log() {
-	var _from = from;
-	$.get('?from=' + _from, function (data) {
-		if (from > _from) return;
-		var willScroll = $(document).height() <= $(window).scrollTop()+$(window).height() + 20;
-		$('#updates').append(data)
-        apply_noreferrer();
-		if (willScroll)
-			$(window).scrollTop($(document).height() + 100000)
-	})
+    var _from = from,
+        $doc = $(document),
+        $window = $(window),
+        appendTarget = $('#updates');
+
+    $.get('?from=' + _from, function (data) {
+        if (from > _from) return;
+        var willScroll = $doc.height() <= $window.scrollTop() + $window.height() + 20;
+        appendTarget.append(data)
+        apply_noreferrer(appendTarget);
+        if (willScroll) {
+            $window.scrollTop($document.height() + 100000);
+        }
+    });
 }
 
 $('#say').submit(function(event) {
