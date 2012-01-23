@@ -63,9 +63,14 @@ $('#enable-chat a').click(function() {
 	return false;
 });
 
+function scroll_to_bottom() {
+    $(window).scrollTop($(document).height() + 100000);
+}
+
 function start_chat() {
 	$('#enable-chat').slideUp();
 	$('#say').slideDown();
+	_update_log(true);
 
     socket = io.connect('http://log.langdev.org:8888');
 
@@ -74,7 +79,7 @@ function start_chat() {
     });
 }
 
-function _update_log() {
+function _update_log(force_scroll) {
     var _from = from,
         $doc = $(document),
         $window = $(window),
@@ -82,11 +87,11 @@ function _update_log() {
 
     $.get('?from=' + _from, function (data) {
         if (from > _from) return;
-        var willScroll = $doc.height() <= $window.scrollTop() + $window.height() + 20;
+        var willScroll = force_scroll || $doc.height() <= $window.scrollTop() + $window.height() + 20;
         appendTarget.append(data)
         apply_noreferrer(appendTarget);
         if (willScroll) {
-            $window.scrollTop($document.height() + 100000);
+        	scroll_to_bottom();
         }
     });
 }
