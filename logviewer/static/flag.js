@@ -41,13 +41,20 @@ function redraw_flags() {
     else
     	$('#flags ul').html('<li>아직 깃발이 하나도 없네요.</li>');
 }
+function refresh_flags() {
+	$.getJSON(location.pathname + '/flags', function (data) {
+		flags = data;
+		redraw_flags();
+    });
+}
 $(function() {
 	$('#toggle-flag-mode').click(function () {
 		toggle_flag_mode();
 		return false;
     });
-	$.getJSON(location.pathname + '/flags', function (data) {
-		flags = data;
-		redraw_flags();
+	$('#refresh-flags').click(function () {
+		refresh_flags();
+		return false;
     });
+    refresh_flags();
 });
