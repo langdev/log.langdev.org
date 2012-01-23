@@ -87,11 +87,11 @@ function _update_log() {
 }
 
 $('#say').submit(function(event) {
-	event.preventDefault()
+	event.preventDefault();
 	var msg = $('#msg').val();
 	if (!msg) return;
 	socket.emit('msg', {nick: nickname, msg: msg});
-	$('#msg').attr('value', '')
+	$('#msg').attr('value', '');
 })
 </script>
 {% else %}
