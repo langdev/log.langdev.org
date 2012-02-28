@@ -34,9 +34,11 @@ i { font-size: 0; color: transparent; }
 #enable-chat a:hover { background-color: #ddd; }
 #say { padding: 10px; font-size: 0.9em; color: #333; background-color: #eee; }
 #eol { text-align: center; }
-#flags { position: fixed; right: 0; bottom: 0; margin: 10px; background-color: #fff; width: 280px; padding: 10px; border: 1px solid #000; }
+#flags { position: fixed; right: 0; bottom: 0; margin: 10px; background-color: #fff; width: 280px; padding: 10px; border: 1px solid #000; opacity: 0.4; }
+#flags h3 { margin-top: 0; }
+#flags:hover { opacity: 1; }
 #flags ul { margin: 0; padding: 0; list-style: none; }
-#toggle-flag-mode { margin-top: 2em; }
+#toggle-flag-mode { margin-top: 1em; }
 a.flaggable { font-weight: bold; color: #7a0; }
 
 @media only screen and (max-device-width: 480px) {

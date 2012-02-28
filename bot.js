@@ -146,7 +146,7 @@ io.enable('browser client minification');
 io.enable('browser client etag');
 io.sockets.on('connection', function (socket) {
 	socket.on('msg', function (data) {
-        send_line(stream, 'PRIVMSG ' + channels + ' :<' + data.nick + '> ' + data.msg)
+        send_line(stream, 'PRIVMSG ' + channels + ' :<' + data.nick + '> ' + data.msg.replace(/[\r\n]/g, ' '))
         io.sockets.emit('update')
     });
 });

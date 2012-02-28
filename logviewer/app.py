@@ -184,20 +184,17 @@ def langdev_sso_call(user_id, user_pass):
     else:
         return False
 
+CANONICAL_PATTERN = re.compile(r'^[\^\|_]*([^\^\|_]*).*$')
 def canonical(value):
     value = value.lower()
-    m = re.search(r'^[\^\|_]*([^\^\|_]*).*$', value)
+    m = CANONICAL_PATTERN.search(value)
     if m is not None:
         return m.group(1)
     else:
         return value
 
-def hashed(value, limit=0):
-    hashed_value = hash(value)
-    if limit:
-        return hashed_value % limit
-    else:
-        return hashed_value
+def hashed(value, limit):
+    return hash(value) % limit
 
 app.jinja_env.filters.update(canonical=canonical, hash=hashed)
 
