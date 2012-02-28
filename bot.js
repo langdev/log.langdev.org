@@ -109,9 +109,13 @@ function log(text) {
 	fs.write(get_log_file(now), str + '\n')
 }
 
+function check_msg(text){
+    return text.split('\n')[0];
+}
+
 function send_line(stream, line) {
-	log('>>> ' + line)
-	stream.write(line + "\r\n")
+	log('>>> ' + line);
+	stream.write(check_msg(line) + "\r\n")
 }
 
 function receive_line(stream, line) {
