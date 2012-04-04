@@ -177,7 +177,10 @@ def langdev_sso_call(user_id, user_pass):
 
     auth_url = 'http://langdev.org/apps/%s/sso/%s' % (app.config['LANGDEV_APP_KEY'], user_id)
     auth_data = {'password': hmac_pass(user_pass) }
-    result = requests.post(auth_url, data=auth_data, headers={'Accept': 'application/json'})
+    result = requests.post(
+        auth_url, data=auth_data, headers={'Accept': 'application/json'},
+        allow_redirects=True
+    )
 
     if result.status_code == requests.codes.ok:
         return json.loads(result.content)
