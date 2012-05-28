@@ -177,27 +177,27 @@ def langdev_sso_call(user_id, user_pass):
 
     auth_url = 'http://langdev.org/apps/%s/sso/%s' % (app.config['LANGDEV_APP_KEY'], user_id)
     auth_data = {'password': hmac_pass(user_pass) }
-    result = requests.post(auth_url, data=auth_data, headers={'Accept': 'application/json'})
+    result = requests.post(
+        auth_url, data=auth_data, headers={'Accept': 'application/json'},
+        allow_redirects=True
+    )
 
     if result.status_code == requests.codes.ok:
         return json.loads(result.content)
     else:
         return False
 
+CANONICAL_PATTERN = re.compile(r'^[\^\|_]*([^\^\|_]*).*$')
 def canonical(value):
     value = value.lower()
-    m = re.search(r'^[\^\|_]*([^\^\|_]*).*$', value)
+    m = CANONICAL_PATTERN.search(value)
     if m is not None:
         return m.group(1)
     else:
         return value
 
-def hashed(value, limit=0):
-    hashed_value = hash(value)
-    if limit:
-        return hashed_value % limit
-    else:
-        return hashed_value
+def hashed(value, limit):
+    return hash(value) % limit
 
 app.jinja_env.filters.update(canonical=canonical, hash=hashed)
 

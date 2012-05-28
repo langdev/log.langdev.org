@@ -83,10 +83,16 @@ function get_timestamp(date) {
 }
 
 var logFile = null
-var today = get_date_str(new Date)
+var today;
+var stat = fs.statSync(logPath);
+if (!stat)
+    today = get_date_str(new Date);
+else
+	today = get_date_str(stat.mtime);
 
 function rotate_log_file() {
-	fs.closeSync(logFile)
+	if (logFile)
+        fs.closeSync(logFile)
 	logFile = null
 	fs.renameSync(logPath, logPath + '.' + today)
 }
@@ -115,6 +121,7 @@ function send_line(stream, line) {
 }
 
 function receive_line(stream, line) {
+	if (!line) return;
 	log('<<< ' + line)
 	var ignore = false;
 	actions.forEach(function (pair) {
@@ -146,7 +153,7 @@ io.enable('browser client minification');
 io.enable('browser client etag');
 io.sockets.on('connection', function (socket) {
 	socket.on('msg', function (data) {
-        send_line(stream, 'PRIVMSG ' + channels + ' :<' + data.nick + '> ' + data.msg)
+        send_line(stream, 'PRIVMSG ' + channels + ' :' + ('<' + data.nick + '> ' + data.msg).replace(/[\r\n]/g, ' '))
         io.sockets.emit('update')
     });
 });
