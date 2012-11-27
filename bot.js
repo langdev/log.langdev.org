@@ -149,6 +149,10 @@ stream.on('data', function (data) {
 	})
 })
 
+stream.on('close', function () {
+	process.exit(1);
+});
+
 io.enable('browser client minification');
 io.enable('browser client etag');
 io.sockets.on('connection', function (socket) {
