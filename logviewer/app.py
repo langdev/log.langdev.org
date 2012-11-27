@@ -11,7 +11,6 @@ import sqlite3
 import logging
 from contextlib import closing
 
-import pytz
 import requests
 import flask
 from flask import Flask, request, redirect, session, url_for, render_template
@@ -25,12 +24,9 @@ LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*? (?P<dir><<<|>
 PRIVMSG_PATTERN = re.compile('^(?::(?P<nick>.+?)!.+? )?PRIVMSG #.+? :(?P<text>.+)$')
 PROXY_MSG_PATTERN = re.compile('<(?P<nick>.+?)> (?P<text>.*)')
 
-def localize(t):
-    return pytz.timezone(app.config['LOG_TIMEZONE']).localize(t)
-
 def parse_log(fp, start=None):
     def extract_time(match):
-        return localize(datetime.datetime.strptime(match.group('timestamp').split('.')[0], '%Y-%m-%dT%H:%M:%S'))
+        return datetime.datetime.strptime(match.group('timestamp').split('.')[0], '%Y-%m-%dT%H:%M:%S')
 
     no = 0
     for line in fp:
@@ -61,23 +57,23 @@ def parse_log(fp, start=None):
             and m.group('data').startswith('JOIN #langdev'):
             yield dict(type='join', time=extract_time(m), is_bot=True, no=-1)
 
-def filter_recent(iterable, minutes):
-    now = localize(datetime.datetime.now())
-    messages = list(iterable)
-    start = 0
-    for i in xrange(len(messages)):
-        if (now - messages[i]['time']).seconds <= 60 * minutes:
-            start = i
-            break
+def filter_recent(messages, minutes):
+    n = len(messages)
+    now = datetime.datetime.now()
+    delta = datetime.timedelta(minutes=minutes)
+    # loop from n-1 to 0
+    count = 0
+    for i in xrange(n - 1, -1, -1):
+    	if now - messages[i]['time'] <= delta:
+    		count += 1
+    	else:
+    		break
 
-    count = len(messages)
-    if count - start < 50:
-        start = count - 50
-
-    if start == 0:
+    limit = max(count, 50)
+    if limit == n:
         return messages, False
     else:
-        return messages[start:], True
+        return messages[-limit:], True
 
 def group_messages(messages, thres):
     it = iter(messages)
@@ -132,7 +128,7 @@ def sphinx_search(query, offset, count):
                 key = time.strftime('%Y%m%d', t)
                 if key not in messages:
                     messages[key] = []
-                messages[key].append(dict(type='privmsg', no=attrs['no'], time=localize(datetime.datetime(*t[:7])), nick=attrs['nick'].decode('utf-8'), text=attrs['content'].decode('utf-8'), is_bot=attrs['bot']))
+                messages[key].append(dict(type='privmsg', no=attrs['no'], time=datetime.datetime(*t[:7]), nick=attrs['nick'].decode('utf-8'), text=attrs['content'].decode('utf-8'), is_bot=attrs['bot']))
             return dict(total=result['total'], messages=((Log(datetime.datetime.strptime(k, "%Y%m%d").date()), v) for k, v in sorted(messages.iteritems(), key=lambda (k, v): k, reverse=True)))
 
 class Log(object):
@@ -175,7 +171,7 @@ def langdev_sso_call(user_id, user_pass):
     def hmac_pass(u_pass):
         return hmac_sha1(hashlib.md5(u_pass).hexdigest())
 
-    auth_url = 'http://langdev.org/apps/%s/sso/%s' % (app.config['LANGDEV_APP_KEY'], user_id)
+    auth_url = 'http://www.langdev.org/apps/%s/sso/%s' % (app.config['LANGDEV_APP_KEY'], user_id)
     auth_data = {'password': hmac_pass(user_pass) }
     result = requests.post(
         auth_url, data=auth_data, headers={'Accept': 'application/json'},
@@ -254,7 +250,10 @@ def log(date):
         messages = list(log.get_messages(start=start))
     except IOError:
         flask.abort(404)
-    last_no = max(msg['no'] for msg in messages)
+    if messages:
+        last_no = max(msg['no'] for msg in messages)
+    else:
+    	last_no = 0
     if request.is_xhr:
         return render_template('_messages.html', log=log, messages=messages, last_no=last_no)
     options = {}
