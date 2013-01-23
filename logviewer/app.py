@@ -8,7 +8,7 @@ import hashlib
 import datetime
 import functools
 import sqlite3
-import logging
+import sphinxapi
 from contextlib import closing
 
 import requests
@@ -24,21 +24,26 @@ LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*? (?P<dir><<<|>
 PRIVMSG_PATTERN = re.compile('^(?::(?P<nick>.+?)!.+? )?PRIVMSG #.+? :(?P<text>.+)$')
 PROXY_MSG_PATTERN = re.compile('<(?P<nick>.+?)> (?P<text>.*)')
 
+
 def parse_log(fp, start=None):
     def extract_time(match):
-        return datetime.datetime.strptime(match.group('timestamp').split('.')[0], '%Y-%m-%dT%H:%M:%S')
+        timestamp = match.group('timestamp').split('.')[0]
+        return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S')
 
     no = 0
     for line in fp:
         m = LINE_PATTERN.match(line)
-        if not m: continue
+        if not m:
+            continue
 
         if 'PRIVMSG' in m.group('data'):
             no += 1
 
-            if start and no < start: continue
+            if start and no < start:
+                continue
             pm = PRIVMSG_PATTERN.match(m.group('data'))
-            if not pm: continue
+            if not pm:
+                continue
 
             is_bot = not pm.group('nick')
             pmm = PROXY_MSG_PATTERN.match(pm.group('text'))
@@ -53,9 +58,10 @@ def parse_log(fp, start=None):
             yield dict(type='privmsg', no=no,
                 time=extract_time(m),
                 nick=nick, text=text, is_bot=is_bot)
-        elif m.group('dir') == '>>>' and start is None \
-            and m.group('data').startswith('JOIN #langdev'):
+        elif (m.group('dir') == '>>>' and start is None and
+              m.group('data').startswith('JOIN #langdev')):
             yield dict(type='join', time=extract_time(m), is_bot=True, no=-1)
+
 
 def filter_recent(messages, minutes):
     n = len(messages)
@@ -64,16 +70,17 @@ def filter_recent(messages, minutes):
     # loop from n-1 to 0
     count = 0
     for i in xrange(n - 1, -1, -1):
-    	if now - messages[i]['time'] <= delta:
-    		count += 1
-    	else:
-    		break
+        if now - messages[i]['time'] <= delta:
+            count += 1
+        else:
+            break
 
     limit = max(count, 50)
     if limit == n:
         return messages, False
     else:
         return messages[-limit:], True
+
 
 def group_messages(messages, thres):
     it = iter(messages)
@@ -89,7 +96,6 @@ def group_messages(messages, thres):
     if group:
         yield group
 
-import sphinxapi
 
 def expand_synonyms(query):
     d = {}
@@ -109,6 +115,7 @@ def expand_synonyms(query):
             expanded_terms.append('(' + term + ')')
     return ' '.join(expanded_terms)
 
+
 def sphinx_search(query, offset, count):
     client = sphinxapi.SphinxClient()
     client.SetServer('localhost', 9312)
@@ -116,7 +123,7 @@ def sphinx_search(query, offset, count):
     client.SetSortMode(sphinxapi.SPH_SORT_EXTENDED, '@id DESC')
     client.SetLimits(offset, count, 100000)
     client.SetRankingMode(sphinxapi.SPH_RANK_PROXIMITY_BM25)
-    
+
     client.SetMatchMode(sphinxapi.SPH_MATCH_BOOLEAN)
     result = client.Query(query, '*')
     if result:
@@ -128,8 +135,24 @@ def sphinx_search(query, offset, count):
                 key = time.strftime('%Y%m%d', t)
                 if key not in messages:
                     messages[key] = []
-                messages[key].append(dict(type='privmsg', no=attrs['no'], time=datetime.datetime(*t[:7]), nick=attrs['nick'].decode('utf-8'), text=attrs['content'].decode('utf-8'), is_bot=attrs['bot']))
-            return dict(total=result['total'], messages=((Log(datetime.datetime.strptime(k, "%Y%m%d").date()), v) for k, v in sorted(messages.iteritems(), key=lambda (k, v): k, reverse=True)))
+                messages[key].append({
+                    'type': 'privmsg',
+                    'no': attrs['no'],
+                    'time': datetime.datetime(*t[:7]),
+                    'nick': attrs['nick'].decode('utf-8'),
+                    'text': attrs['content'].decode('utf-8'),
+                    'is_bot': attrs['bot'],
+                })
+            sorted_messages = sorted(messages.iteritems(),
+                                     key=lambda (k, v): k,
+                                     reverse=True)
+            m = ((Log(datetime.datetime.strptime(k, "%Y%m%d").date()), v)
+                 for k, v in sorted_messages)
+            return {
+                'total': result['total'],
+                'messages': m,
+            }
+
 
 class Log(object):
     def __init__(self, date):
@@ -164,18 +187,21 @@ class Log(object):
     def yesterday(self):
         return Log(self.date - datetime.timedelta(days=1))
 
+
 def langdev_sso_call(user_id, user_pass):
     def hmac_sha1(value):
         hash = hmac.new(app.config['LANGDEV_SECRET_KEY'], value, hashlib.sha1)
         return hash.hexdigest()
+
     def hmac_pass(u_pass):
         return hmac_sha1(hashlib.md5(u_pass).hexdigest())
 
-    auth_url = 'http://www.langdev.org/apps/%s/sso/%s' % (app.config['LANGDEV_APP_KEY'], user_id)
-    auth_data = {'password': hmac_pass(user_pass) }
+    auth_url = 'http://www.langdev.org/apps/%s/sso/%s' % (
+        app.config['LANGDEV_APP_KEY'], user_id)
+    auth_data = {'password': hmac_pass(user_pass)}
     result = requests.post(
         auth_url, data=auth_data, headers={'Accept': 'application/json'},
-        allow_redirects=True
+        allow_redirects=True,
     )
 
     if result.status_code == requests.codes.ok:
@@ -192,43 +218,53 @@ def canonical(value):
     else:
         return value
 
+
 def hashed(value, limit):
     return hash(value) % limit
 
 app.jinja_env.filters.update(canonical=canonical, hash=hashed)
 
+
 def login_required(f):
     @functools.wraps(f)
     def _wrapped(*args, **kwargs):
         if 'username' not in session:
-        	return redirect(url_for('login', next=request.url))
+            return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return _wrapped
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = False
 
     if request.method == 'POST':
-    	if langdev_sso_call(request.form['username'], request.form['password']):
-    		session['username'] = request.form['username']
-    		access_log.write(u'[%s] %s logged in\n' % (datetime.datetime.now().isoformat(), session['username']))
-    		access_log.flush()
-    		return redirect(request.args.get('next', url_for('index')))
-    	else:
-    		error = True
+        auth = langdev_sso_call(request.form['username'],
+                                request.form['password'])
+        if auth:
+            session['username'] = request.form['username']
+            now = datetime.datetime.now()
+            access_log.write(u'[%s] %s logged in\n' %
+                             (now.isoformat(), session['username']))
+            access_log.flush()
+            return redirect(request.args.get('next', url_for('index')))
+        else:
+            error = True
 
     return render_template('login.html', error=error)
+
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     del session['username']
     return redirect(url_for('login'))
 
+
 @app.route('/')
 def index():
     today = Log.today()
     return redirect(url_for('log', date=today.date, recent=30))
+
 
 @app.route('/random')
 def random():
@@ -236,6 +272,7 @@ def random():
     ago = random.randrange(30, 600)
     rand = datetime.date.today() - datetime.timedelta(days=ago)
     return redirect(url_for('log', date=rand))
+
 
 @app.route('/<date>')
 @login_required
@@ -253,9 +290,10 @@ def log(date):
     if messages:
         last_no = max(msg['no'] for msg in messages)
     else:
-    	last_no = 0
+        last_no = 0
     if request.is_xhr:
-        return render_template('_messages.html', log=log, messages=messages, last_no=last_no)
+        return render_template('_messages.html',
+                               log=log, messages=messages, last_no=last_no)
     options = {}
     if log.is_today and 'recent' in request.args:
         recent = int(request.args['recent'])
@@ -263,7 +301,14 @@ def log(date):
         if truncated:
             options['recent'] = recent
     messages = group_messages(messages, app.config['GROUP_THRES'])
-    return render_template('log.html', today=Log.today(), log=log, messages=messages, options=options, last_no=last_no, username=session['username'])
+    return render_template('log.html',
+                           today=Log.today(),
+                           log=log,
+                           messages=messages,
+                           options=options,
+                           last_no=last_no,
+                           username=session['username'])
+
 
 @app.route('/atom')
 def atom():
@@ -274,6 +319,7 @@ def atom():
     messages = reversed(list(messages))
     return render_template('atom_feed.xml', log=log, messages=messages)
 
+
 @app.route('/search')
 @login_required
 def search():
@@ -283,13 +329,23 @@ def search():
     query_pattern = expand_synonyms(query)
     result = sphinx_search(query_pattern, offset=offset, count=per_page)
     page = offset / per_page
-    pages = [{'url': url_for('search', q=query, offset=n * per_page), 'number': n + 1, 'current': n == page} for n in xrange(result['total'] / per_page)]
-    return render_template('search_result.html', query=query, total=result['total'], result=result['messages'], pages=pages, query_pattern=query_pattern)
+    pages = [{'url': url_for('search', q=query, offset=n * per_page),
+              'number': n + 1,
+              'current': n == page}
+             for n in xrange(result['total'] / per_page)]
+    return render_template('search_result.html',
+                           query=query,
+                           total=result['total'],
+                           result=result['messages'],
+                           pages=pages,
+                           query_pattern=query_pattern)
+
 
 def connect_db():
     conn = sqlite3.connect(app.config['FLAG_DB'])
     conn.row_factory = sqlite3.Row
     return conn
+
 
 @app.route('/<date>/flags')
 @login_required
@@ -299,12 +355,16 @@ def flags(date):
         c.execute('select * from flags where date=? order by line', (date, ))
         return json.dumps([dict(row) for row in c])
 
+
 @app.route('/<date>/<line>/flags', methods=['POST'])
 @login_required
 def flag(date, line):
     db = connect_db()
     c = db.cursor()
-    c.execute('insert into flags (date, time, line, title, user) values(?, ?, ?, ?, ?)', (date, request.form['time'], int(line), request.form['title'], session['username']))
+    c.execute('insert into flags (date, time, line, title, user) '
+              'values(?, ?, ?, ?, ?)',
+              (date, request.form['time'], int(line),
+               request.form['title'], session['username']))
     db.commit()
     id = c.lastrowid
     db.close()
