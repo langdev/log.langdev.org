@@ -41,7 +41,7 @@ i { font-size: 0; color: transparent; }
 #toggle-flag-mode { margin-top: 1em; }
 a.flaggable { font-weight: bold; color: #7a0; }
 
-@media only screen and (max-device-width: 480px) {
+@media (max-width: 767px) {
     #navbar { position: static; padding: 10px; text-align: center; box-shadow: none; }
     #flags { position: static; border: none; margin: 0; width: 100%; }
     .time { display: none; }
