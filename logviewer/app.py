@@ -20,8 +20,10 @@ app.config.from_envvar('LOGVIEWER_SETTINGS')
 
 access_log = codecs.open(app.config['ACCESS_LOG_PATH'], 'a', encoding='utf-8')
 
-LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*? (?P<dir><<<|>>>) (?P<data>.+)$')
-PRIVMSG_PATTERN = re.compile('^(?::(?P<nick>.+?)!.+? )?PRIVMSG #.+? :(?P<text>.+)$')
+LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*?'
+                          ' (?P<dir><<<|>>>) (?P<data>.+)$')
+PRIVMSG_PATTERN = re.compile('^(?::(?P<nick>.+?)!.+? )?PRIVMSG #.+?'
+                             ' :(?P<text>.+)$')
 PROXY_MSG_PATTERN = re.compile('<(?P<nick>.+?)> (?P<text>.*)')
 
 
