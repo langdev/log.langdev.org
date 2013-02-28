@@ -42,7 +42,9 @@ IRC 로그 봇인 `bot.js`는 자바스크립트로 작성되어 [node.js][]를 
 [pip][]을 사용한다고 가정했을 때, 다음 명령으로 필요한 모든 라이브러리를 설치할
 수 있습니다.
 
-    $ pip install -r logviewer/requirements.txt
+    $ pip install -e .
+    # 또는 pip 없이 이렇게도 할 수 있습니다.
+    $ python setup.py develop
 
 [Python]: http://python.org/
 [Flask]: http://flask.pocoo.org/
