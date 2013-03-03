@@ -4,6 +4,8 @@ import os.path
 # 디버깅 플래그
 DEBUG = True
 
+LISTEN = 5000
+
 # 로깅할 IRC 네트워크의 주소와 포트 번호, 채널명을 지정합니다.
 IRC_HOST = 'irc.ozinger.org'
 IRC_PORT = 6666
