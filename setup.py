@@ -39,6 +39,7 @@ setup(
         'requests',
         'flask',
         'pytz',
+        'tornadio2',
     ],
     extras_require={
         'doc': [

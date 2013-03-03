@@ -1,8 +1,5 @@
 from __future__ import unicode_literals
 
-import eventlet
-eventlet.monkey_patch()
-
 import logging
 import hashlib
 import re
@@ -10,9 +7,12 @@ import time
 import io
 import os.path
 import datetime
+import socket
 
 import requests
-from eventlet.green import socket
+import tornado.ioloop
+import tornado.iostream
+import tornadio2
 
 from .app import app
 
@@ -41,7 +41,7 @@ def pong(stream, m):
 
 @action(r'^:(.+?) 001')
 def join_channel(stream, m):
-    logger = log.getChild('join_channel')
+    logger = _log.getChild('join_channel')
     for channel in app.config['IRC_CHANNELS']:
         send_line(stream, 'JOIN ' + channel)
         logger.info('Joining channel: %s', channel)
@@ -49,7 +49,7 @@ def join_channel(stream, m):
 
 @action(r'^\:(.+)\!(.+) PRIVMSG \#(.+) :(.+)')
 def update(stream, m):
-    # io.sockets.emit('update')
+    ChatConnection.emit_all('update')
     check_link(stream, m)
 
 
@@ -117,28 +117,67 @@ def log(text):
 def send_line(stream, line):
     log('>>> ' + line)
     stream.write(line.encode('utf-8') + b'\r\n')
-    stream.flush()
 
 
-def receive_line(stream, line):
+def receive_line(line):
+    global stream
     if not line:
         return
+    line = line.decode('utf-8')
     log('<<< ' + line)
     for pattern, handler in action.handlers:
         match = pattern.match(line)
         if match:
             handler(stream, match)
+    stream.read_until(b'\r\n', receive_line)
+
+
+def send_request():
+    global stream
+    logger = _log.getChild('send_request')
+    logger.info('Socket connected: %s:%s' % (host, port))
+    send_line(stream, 'USER bot 0 * :fishing')
+    send_line(stream, 'NICK ' + app.config['IRC_NICKNAME'])
+    stream.read_until(b'\r\n', receive_line)
+
+
+class ChatConnection(tornadio2.SocketConnection):
+    connections = set()
+
+    def on_open(self, request):
+        logger = _log.getChild(self.__class__.__name__ + '.on_open')
+        self.connections.add(self)
+        logger.debug('Current connections: %s', self.connections)
+
+    def on_close(self):
+        logger = _log.getChild(self.__class__.__name__ + '.on_close')
+        self.connections.remove(self)
+        logger.debug('Current connections: %s', self.connections)
+
+    @tornadio2.conn.event
+    def msg(self, nick, msg):
+        channel = app.config['IRC_CHANNELS'][0]
+        message = '<{0}> {1}'.format(nick, msg)
+        message = message.replace('\r\n', ' ')
+        send_line(stream, 'PRIVMSG {0} :{1}'.format(channel, message))
+        self.emit('update')
+
+    @classmethod
+    def emit_all(cls, event, *args, **kwargs):
+        for conn in cls.connections:
+            conn.emit(event, *args, **kwargs)
 
 
 if __name__ == '__main__':
-    c = socket.socket()
+    _log.setLevel(logging.INFO)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    stream = tornado.iostream.IOStream(sock)
     host, port = app.config['IRC_HOST'], app.config['IRC_PORT']
-    c.connect((socket.gethostbyname(host), port))
-    log.info('Socket connected: %s:%s' % (host, port))
-    stream = c.makefile('w')
-    send_line(stream, 'USER bot 0 * :fishing')
-    send_line(stream, 'NICK ' + app.config['IRC_NICKNAME'])
-    reader = c.makefile('r')
-    for line in iter(reader.readline, b''):
-        line = line.decode('utf-8')
-        receive_line(stream, line)
+    stream.connect((host, port), send_request)
+
+    chat_router = tornadio2.TornadioRouter(ChatConnection)
+    application = tornado.web.Application(chat_router.urls,
+                                          socket_io_port=8888)
+    socketio_server = tornadio2.SocketServer(application, auto_start=False)
+    socketio_server.start()
+    tornado.ioloop.IOLoop.instance().start()
