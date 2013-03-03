@@ -13,6 +13,8 @@ URL_REG = re.compile(r'(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?'
 
 
 class action(object):
+    handlers = []
+
     def __init__(self, pattern):
         self.pattern = re.compile(pattern)
 
