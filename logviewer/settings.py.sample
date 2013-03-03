@@ -1,10 +1,19 @@
+# -*- coding: utf-8 -*-
 import os.path
 
 # 디버깅 플래그
 DEBUG = True
 
+# 로깅할 IRC 네트워크의 주소와 포트 번호, 채널명을 지정합니다.
+IRC_HOST = 'irc.ozinger.org'
+IRC_PORT = 6666
+IRC_CHANNELS = ('#langdev', )
+
+# 로그 봇의 닉네임을 설정합니다.
+# 이미 존재하는 다른 사용자나 봇의 닉네임과 충돌하지 않게 정하십시오.
+IRC_NICKNAME = u'산낚지'
+
 # 로그 폴더와 약어(synonym) 목록 파일의 경로를 지정합니다.
-# 로그 폴더는 config.js에 설정된 곳과 동일한 곳을 지정하고,
 # 약어 파일은 저장소의 루트 폴더에 있습니다.
 LOG_DIR = os.path.abspath('../logs')
 SYNONYM_PATH = os.path.abspath('../synonyms')
@@ -25,5 +34,7 @@ SECRET_KEY = ''
 # http://langdev.org/apps/ 페이지에서 키를 발급받을 수 있습니다.
 LANGDEV_APP_KEY = ''
 LANGDEV_SECRET_KEY = ''
+
+LANGDEV_LINKS_API_KEY = ''
 
 FLAG_DB = 'flag.db'
