@@ -1,7 +1,7 @@
 import os
+import io
 import re
 import time
-import codecs
 import hmac
 import json
 import hashlib
@@ -18,7 +18,7 @@ from flask import Flask, request, redirect, session, url_for, render_template
 app = Flask(__name__)
 app.config.from_envvar('LOGVIEWER_SETTINGS')
 
-access_log = codecs.open(app.config['ACCESS_LOG_PATH'], 'a', encoding='utf-8')
+access_log = io.open(app.config['ACCESS_LOG_PATH'], 'a', encoding='utf-8')
 
 LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*?'
                           ' (?P<dir><<<|>>>) (?P<data>.+)$')
@@ -101,7 +101,7 @@ def group_messages(messages, thres):
 
 def expand_synonyms(query):
     d = {}
-    with codecs.open(app.config['SYNONYM_PATH'], encoding='utf-8') as fp:
+    with io.open(app.config['SYNONYM_PATH'], encoding='utf-8') as fp:
         for line in fp:
             words = line.rstrip().split(' ')
             words.sort(key=len, reverse=True)
@@ -177,7 +177,7 @@ class Log(object):
         return url_for('log', date=self.date)
 
     def get_messages(self, start=None):
-        with codecs.open(self.path, encoding='utf-8', errors='replace') as fp:
+        with io.open(self.path, encoding='utf-8', errors='replace') as fp:
             for msg in parse_log(fp, start):
                 yield msg
 
