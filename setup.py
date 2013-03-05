@@ -8,15 +8,15 @@ except ImportError:
 from setuptools.command.test import test as TestCommand
 
 
-class Tox(TestCommand):
+class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
-        import tox
-        errno = tox.cmdline(self.test_args)
+        import pytest
+        errno = pytest.main(self.test_args)
         exit(errno)
 
 
@@ -48,10 +48,9 @@ setup(
     },
     tests_require=[
         'pytest',
-        'tox',
     ],
     cmdclass={
-        'test': Tox,
+        'test': PyTest,
     },
     dependency_links=[
     ],
