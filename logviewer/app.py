@@ -16,9 +16,8 @@ import flask
 from flask import Flask, request, redirect, session, url_for, render_template
 
 app = Flask(__name__)
-app.config.from_envvar('LOGVIEWER_SETTINGS')
 
-access_log = io.open(app.config['ACCESS_LOG_PATH'], 'a', encoding='utf-8')
+access_log = None
 
 LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*?'
                           ' (?P<dir><<<|>>>) (?P<data>.+)$')
@@ -238,6 +237,7 @@ def login_required(f):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    global access_log
     error = False
 
     if request.method == 'POST':
@@ -246,6 +246,9 @@ def login():
         if auth:
             session['username'] = request.form['username']
             now = datetime.datetime.now()
+            if not access_log:
+                access_log = io.open(app.config['ACCESS_LOG_PATH'], 'a',
+                                     encoding='utf-8')
             access_log.write(u'[%s] %s logged in\n' %
                              (now.isoformat(), session['username']))
             access_log.flush()
@@ -373,4 +376,5 @@ def flag(date, line):
     return str(id)
 
 if __name__ == '__main__':
+    app.config.from_envvar('LOGVIEWER_SETTINGS')
     app.run(host='0.0.0.0', port=app.config.get('LISTEN', 5000))

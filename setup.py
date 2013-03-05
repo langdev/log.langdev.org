@@ -37,6 +37,7 @@ setup(
     install_requires=[
         'requests',
         'flask >= 0.9',
+        'Flask-Script >= 0.5',
         'pytz',
         'tornadio2',
     ],
