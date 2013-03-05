@@ -59,8 +59,11 @@ def check_link(stream, m):
     if url_m:
         url = url_m.group(0)
         ts = time.time()
-        auth = hashlib.md5(current_app.config['LANGDEV_LINKS_API_KEY'] + str(int(ts)) +
-                           hashlib.md5(url).hexdigest()).hexdigest()
+        auth = hashlib.md5()
+        auth.update(current_app.config['LANGDEV_LINKS_API_KEY'])
+        auth.update(str(int(ts)))
+        auth.update(hashlib.md5(url).hexdigest())
+        auth = auth.hexdigest()
         data = {
             'ts': ts,
             'q': url,
