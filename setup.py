@@ -35,9 +35,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'eventlet',
         'requests',
-        'flask',
+        'flask >= 0.9',
         'pytz',
         'tornadio2',
     ],
