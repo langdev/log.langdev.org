@@ -191,8 +191,7 @@ def launch_chatserver(bot):
     chat_router = tornadio2.TornadioRouter(ChatConnection)
     application = tornado.web.Application(chat_router.urls,
                                           socket_io_port=8888)
-    socketio_server = tornadio2.SocketServer(application, auto_start=False)
-    socketio_server.start()
+    return tornadio2.SocketServer(application, auto_start=False)
 
 
 if __name__ == '__main__':
@@ -200,5 +199,5 @@ if __name__ == '__main__':
     from .app import app
     with app.app_context():
         bot = launch_bot(current_app.config)
-        launch_chatserver(bot)
+        launch_chatserver(bot).start()
         tornado.ioloop.IOLoop.instance().start()
