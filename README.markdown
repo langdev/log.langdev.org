@@ -48,14 +48,14 @@ IRC 봇과 로그 뷰어가 사용할 로그 폴더를 만듭니다. 편의상 �
 로그 뷰어를 실행하기 위해서는 먼저 로그 봇을 실행하여 IRC 로그를 수집해야
 합니다.
 
-    $ LOGVIEWER_SETTINGS="logviewer/settings.py" python -m logviewer.bot
+    $ python manage.py runbot --config=settings.py
 
 
 ### 로그 뷰어(웹서버) 실행
 
 로그가 어느 정도 쌓이고 나면 이제 다음 명령으로 웹서버를 실행할 수 있습니다.
 
-    $ LOGVIEWER_SETTINGS="logviewer/settings.py" python -m logviewer.app
+    $ python manage.py runserver --config=settings.py
      * Running on http://0.0.0.0:5000/
      * Restarting with reloader
 

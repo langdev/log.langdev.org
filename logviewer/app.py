@@ -377,4 +377,4 @@ def flag(date, line):
 
 if __name__ == '__main__':
     app.config.from_envvar('LOGVIEWER_SETTINGS')
-    app.run(host='0.0.0.0', port=app.config.get('LISTEN', 5000))
+    app.run(host='0.0.0.0', port=5000)

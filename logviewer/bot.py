@@ -186,11 +186,11 @@ def launch_bot(config):
     return bot
 
 
-def launch_chatserver(bot):
+def launch_chatserver(bot, port=8888):
     ChatConnection.bot = bot
     chat_router = tornadio2.TornadioRouter(ChatConnection)
     application = tornado.web.Application(chat_router.urls,
-                                          socket_io_port=8888)
+                                          socket_io_port=port)
     return tornadio2.SocketServer(application, auto_start=False)
 
 
