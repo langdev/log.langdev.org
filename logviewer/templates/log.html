@@ -44,7 +44,7 @@
 <a href="#">대화 시작</a>
 </div>
 
-<form method="post" action="say" id="say" style="display: none">
+<form method="post" action="say" id="say" style="display: none" autocomplete="off">
 <p>
 <input type="text" name="msg" id="msg" size="60" />
 <input type="submit" value="보내기" />
@@ -58,6 +58,39 @@ var from = {{ last_no + 1 }};
 var nickname = '{{ username }}';
 
 var socket;
+
+var hidden, visibilityChange;
+if (typeof document.hidden !== "undefined") {
+    hidden = "hidden";
+    visibilityChange = "visibilitychange";
+} else if (typeof document.mozHidden !== "undefined") {
+    hidden = "mozHidden";
+    visibilityChange = "mozvisibilitychange";
+} else if (typeof document.msHidden !== "undefined") {
+    hidden = "msHidden";
+    visibilityChange = "msvisibilitychange";
+} else if (typeof document.webkitHidden !== "undefined") {
+    hidden = "webkitHidden";
+    visibilityChange = "webkitvisibilitychange";
+}
+
+var origTitle = document.title;
+function handleVisibilityChange() {
+    if (!document[hidden]) {
+    	document.title = origTitle;
+    }
+}
+function notifyUpdate() {
+	if (document[hidden]) {
+        document.title = '+ ' + origTitle;
+    }
+}
+
+if (typeof document.addEventListener !== "undefined" &&
+    typeof hidden !== "undefined") {
+    // Handle page visibility change  
+    document.addEventListener(visibilityChange, handleVisibilityChange, false);
+}
 
 $('#enable-chat a').click(function() {
 	start_chat();
@@ -88,6 +121,7 @@ function _update_log(force_scroll) {
 
     $.get('?from=' + _from, function (data) {
         if (from > _from) return;
+        notifyUpdate();
         var willScroll = force_scroll || $doc.height() <= $window.scrollTop() + $window.height() + 20;
         appendTarget.append(data)
         apply_noreferrer(appendTarget);
