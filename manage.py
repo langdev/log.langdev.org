@@ -27,5 +27,11 @@ def runbot():
     tornado.ioloop.IOLoop.instance().start()
 
 
+@manager.command
+def indexer():
+    import logviewer.indexer
+    logviewer.indexer.main()
+
+
 if __name__ == '__main__':
     manager.run()
