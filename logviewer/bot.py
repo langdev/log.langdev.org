@@ -109,9 +109,9 @@ class LogWriter(object):
 
     def log(self, text):
         now = datetime.datetime.now()
-        msg = '[{0}] {1}'.format(get_timestamp(now), text)
+        msg = '[{0}] {1}\n'.format(get_timestamp(now), text)
         logfile = self.get_log_file(now)
-        print >> logfile, msg
+        logfile.write(msg)
         logfile.flush()
 
 
