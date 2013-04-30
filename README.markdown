@@ -61,3 +61,17 @@ IRC 봇과 로그 뷰어가 사용할 로그 폴더를 만듭니다. 편의상 �
 
 이제 <http://localhost:5000/>과 같은 주소로 접속하면 로그 뷰어를 볼 수
 있습니다.
+
+
+검색 엔진
+---------
+
+### 설치
+
+[Sphinx](http://sphinxsearch.com/)를 설치합니다. 현재 64비트 환경에서만 작동이 보장됩니다.
+
+### 설정
+
+1. 소스 코드 디렉토리에서 `reset.sh`를 실행하여 `sphinx.conf`와 인덱스 파일을 생성합니다.
+2. 서버를 실행합니다: `searchd --config sphinx.conf`
+3. cron 등으로 `indexer --config sphinx.conf --all --rotate`를 주기적으로 실행해서 인덱스가 갱신되게 합니다.
