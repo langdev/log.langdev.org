@@ -1,5 +1,7 @@
 import re
-import datetime
+import email.utils
+import time
+from datetime import datetime
 
 LINE_PATTERN = re.compile('^.*?\[(?P<timestamp>.+?)(?: #.*?)?\].*?'
                           ' (?P<dir><<<|>>>) (?P<data>.+)$')
@@ -9,8 +11,19 @@ PROXY_MSG_PATTERN = re.compile('<(?P<nick>.+?)> (?P<text>.*)')
 
 def parse_log(fp, start=None):
     def extract_time(match):
-        timestamp = match.group('timestamp').split('.')[0]
-        return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S')
+        t = match.group('timestamp')
+        try:
+            # ISO 8601
+            timestamp = t.split('.')[0]
+            return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S')
+        except ValueError:
+            # RFC 2822
+            t = email.utils.parsedate(t)
+            if t is not None:
+            	t = time.mktime(t)
+            else:
+            	t = 0 # fail
+            return datetime.fromtimestamp(t)
 
     no = 0
     for line in fp:
