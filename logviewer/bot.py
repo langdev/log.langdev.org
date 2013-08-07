@@ -41,9 +41,15 @@ def pong(bot, m):
 @action(r'^:(.+?) 001')
 def join_channel(bot, m):
     logger = _log.getChild('join_channel')
-    for channel in current_app.config['IRC_CHANNELS']:
-        bot.send_line('JOIN ' + channel)
-        logger.info('Joining channel: %s', channel)
+    for i in current_app.config['IRC_CHANNELS']:
+        if isinstance(i, basestring):
+            name = i
+            password = ''
+        else:
+            name = i['name']
+            password = i.get('password', '')
+        bot.send_line('JOIN {0} {1}'.format(name, password))
+        logger.info('Joining channel: %s', name)
 
 
 @action(r'^\:(.+)\!(.+) PRIVMSG \#(.+) :(.+)')
@@ -167,6 +173,8 @@ class ChatConnection(tornadio2.SocketConnection):
     @tornadio2.conn.event
     def msg(self, nick, msg):
         channel = current_app.config['IRC_CHANNELS'][0]
+        if not isinstance(channel, basestring):
+            channel = channel['name']
         message = '<{0}> {1}'.format(nick, msg)
         message = message.replace('\r\n', ' ')
         self.bot.send_line('PRIVMSG {0} :{1}'.format(channel, message))

@@ -6,14 +6,18 @@ DEBUG = True
 
 LOGBOT_LISTEN = 8888
 
-# 로깅할 IRC 네트워크의 주소와 포트 번호, 채널명을 지정합니다.
+# 로깅할 IRC 네트워크의 주소와 포트 번호를 지정합니다.
 IRC_HOST = 'irc.ozinger.org'
 IRC_PORT = 6666
-IRC_CHANNELS = ('#langdev', )
 
 # 로그 봇의 닉네임을 설정합니다.
 # 이미 존재하는 다른 사용자나 봇의 닉네임과 충돌하지 않게 정하십시오.
 IRC_NICKNAME = u'산낚지'
+
+# 로깅할 채널들을 나열합니다.
+IRC_CHANNELS = (
+    {'name': '#langdev', 'password': ''},
+)
 
 # 로그 폴더와 약어(synonym) 목록 파일의 경로를 지정합니다.
 # 약어 파일은 저장소의 루트 폴더에 있습니다.
