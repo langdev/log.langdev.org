@@ -40,6 +40,9 @@ setup(
         'doc': [
             'Sphinx',
         ],
+        'google_apps': [
+            'Flask-OAuthlib',
+        ],
     },
     tests_require=[
         'pytest',
