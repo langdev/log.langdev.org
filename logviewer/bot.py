@@ -122,9 +122,12 @@ class LogWriter(object):
 
 
 class Bot(object):
-    def __init__(self, logger):
+    def __init__(self, logger, use_ssl=False):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-        self.stream = tornado.iostream.IOStream(sock)
+        if use_ssl:
+            self.stream = tornado.iostream.SSLIOStream(sock)
+        else:
+            self.stream = tornado.iostream.IOStream(sock)
         self.logger = logger
 
     def connect(self, host, port):
@@ -189,7 +192,7 @@ class ChatConnection(tornadio2.SocketConnection):
 def launch_bot(config):
     logger = LogWriter(config['LOG_DIR'])
     host, port = config['IRC_HOST'], config['IRC_PORT']
-    bot = Bot(logger=logger)
+    bot = Bot(logger=logger, use_ssl=config.get('IRC_USE_SSL', False))
     bot.connect(host, port)
     return bot
 
