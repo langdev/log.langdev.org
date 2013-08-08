@@ -5,10 +5,11 @@ import json
 import requests
 from flask import request, current_app, render_template
 
+from .base import AuthBackend
 from ..exc import AuthenticationError
 
 
-class LangDevAuth(object):
+class LangDevAuth(AuthBackend):
     def __init__(self, app_key=None, secret_key=None):
         self._app_key = app_key
         self._secret_key = secret_key

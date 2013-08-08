@@ -3,12 +3,13 @@ from flask import request, url_for
 from flask.ext.oauthlib.client import OAuth, OAuthException
 import requests
 
+from .base import AuthBackend
 from ..exc import AuthenticationError
 
 oauth = OAuth()
 
 
-class GoogleAppsAuth(object):
+class GoogleAppsAuth(AuthBackend):
     def __init__(self, name, domain, consumer_key, consumer_secret):
         self.domain = domain
         self.remote = oauth.remote_app(
