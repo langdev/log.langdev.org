@@ -2,20 +2,19 @@ import os
 import io
 import re
 import time
-import hmac
 import json
-import hashlib
 import datetime
 import functools
 import sqlite3
 import sphinxapi
 from contextlib import closing
 
-import requests
 import flask
 from flask import Flask, request, redirect, session, url_for, render_template
 
+from logviewer.exc import AuthenticationError
 from logviewer.parser import parse_log
+
 
 app = Flask(__name__)
 
@@ -146,27 +145,6 @@ class Log(object):
         return Log(self.date - datetime.timedelta(days=1))
 
 
-def langdev_sso_call(user_id, user_pass):
-    def hmac_sha1(value):
-        hash = hmac.new(app.config['LANGDEV_SECRET_KEY'], value, hashlib.sha1)
-        return hash.hexdigest()
-
-    def hmac_pass(u_pass):
-        return hmac_sha1(hashlib.md5(u_pass).hexdigest())
-
-    auth_url = 'http://www.langdev.org/apps/%s/sso/%s' % (
-        app.config['LANGDEV_APP_KEY'], user_id)
-    auth_data = {'password': hmac_pass(user_pass)}
-    result = requests.post(
-        auth_url, data=auth_data, headers={'Accept': 'application/json'},
-        allow_redirects=True,
-    )
-
-    if result.status_code == requests.codes.ok:
-        return json.loads(result.content)
-    else:
-        return False
-
 CANONICAL_PATTERN = re.compile(r'^[\^\|_]*([^\^\|_]*).*$')
 def canonical(value):
     value = value.lower()
@@ -194,26 +172,27 @@ def login_required(f):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    auth = app.config['AUTH_BACKEND']
+    return auth.login(error=None)
+
+
+@app.route('/login/authenticate', methods=['GET', 'POST'])
+def authenticate():
+    auth = app.config['AUTH_BACKEND']
+    try:
+        result = auth.authenticate()
+    except AuthenticationError as e:
+        return auth.login(error=e)
     global access_log
-    error = False
-
-    if request.method == 'POST':
-        auth = langdev_sso_call(request.form['username'],
-                                request.form['password'])
-        if auth:
-            session['username'] = request.form['username']
-            now = datetime.datetime.now()
-            if not access_log:
-                access_log = io.open(app.config['ACCESS_LOG_PATH'], 'a',
-                                     encoding='utf-8')
-            access_log.write(u'[%s] %s logged in\n' %
-                             (now.isoformat(), session['username']))
-            access_log.flush()
-            return redirect(request.args.get('next', url_for('index')))
-        else:
-            error = True
-
-    return render_template('login.html', error=error)
+    session['username'] = result['username']
+    now = datetime.datetime.now()
+    if not access_log:
+        access_log = io.open(app.config['ACCESS_LOG_PATH'], 'a',
+                             encoding='utf-8')
+    access_log.write(u'[%s] %s logged in\n' %
+                     (now.isoformat(), session['username']))
+    access_log.flush()
+    return redirect(request.args.get('next', url_for('index')))
 
 
 @app.route('/logout', methods=['GET', 'POST'])
