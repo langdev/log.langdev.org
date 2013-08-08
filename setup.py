@@ -1,10 +1,5 @@
 #!/usr/bin/env python
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from distribute_setup import use_setuptools
-    use_setuptools()
-    from setuptools import setup, find_packages  # NOQA
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
