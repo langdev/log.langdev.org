@@ -135,10 +135,16 @@ class Log(object):
         else:
             return path
 
+    @property
+    def exists(self):
+        return os.path.isfile(self.path)
+
     def url(self, recent=None):
         return url_for('log', channel=self.name, date=self.date, recent=recent)
 
     def get_messages(self, start=None):
+        if not self.exists:
+            return
         with io.open(self.path, encoding='utf-8', errors='replace') as fp:
             for msg in parse_log(fp, start):
                 yield msg
@@ -236,12 +242,19 @@ def index(channel):
 def random_(channel):
     if channel is None:
         channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
-        channel = random.choice([i['name'] for i in channels])
+        channel_names = [i['name'] for i in channels]
     else:
         channel = verify_channel(channel)
-    ago = random.randrange(30, 600)
-    rand = datetime.date.today() - datetime.timedelta(days=ago)
-    return redirect(url_for('log', channel=channel[1:], date=rand))
+    for _ in range(10):
+        chan = channel or random.choice(channel_names)
+        ago = random.randrange(30, 600)
+        rand = datetime.date.today() - datetime.timedelta(days=ago)
+        log = Log(chan, rand)
+        if log.exists:
+            break
+    else:
+        return redirect(url_for('index'))
+    return redirect(log.url())
 
 
 @app.route('/<date:date>', defaults={'channel': None})
@@ -253,14 +266,13 @@ def log(channel, date):
         return redirect(url_for('log', channel=channel, date=date))
     channel = verify_channel(channel)
     log = Log(channel, date)
+    if not log.exists and not log.is_today:
+        flask.abort(404)
     if 'from' in request.args:
         start = int(request.args['from'])
     else:
         start = None
-    try:
-        messages = list(log.get_messages(start=start))
-    except IOError:
-        flask.abort(404)
+    messages = list(log.get_messages(start=start))
     if messages:
         last_no = max(msg['no'] for msg in messages)
     else:
@@ -294,6 +306,8 @@ def atom(channel):
         return redirect(url_for('atom', channel=get_default_channel()['name']))
     channel = verify_channel(channel)
     log = Log.today(channel)
+    if not log.exists:
+        flask.abort(404)
     messages = group_messages(log.get_messages(), app.config['GROUP_THRES'])
     messages = reversed(list(messages))
     return render_template('atom_feed.xml', log=log, messages=messages)
