@@ -127,9 +127,8 @@ class Log(object):
         else:
             return path
 
-    @property
-    def url(self):
-        return url_for('log', date=self.date)
+    def url(self, recent=None):
+        return url_for('log', date=self.date, recent=recent)
 
     def get_messages(self, start=None):
         with io.open(self.path, encoding='utf-8', errors='replace') as fp:
@@ -204,7 +203,7 @@ def logout():
 @app.route('/')
 def index():
     today = Log.today()
-    return redirect(url_for('log', date=today.date, recent=30))
+    return redirect(today.url(recent=30))
 
 
 @app.route('/random')

@@ -7,7 +7,7 @@
 
 <h2>{{ log.date }}</h2>
 <p id="nav">
-	<a href="{{ today.yesterday.url }}">어제</a> &middot; <a href="{{ today.url }}">오늘</a> &middot; <a href="{{ url_for('random') }}">아무 날</a> / <a href="http://links.langdev.org/{{ log.date.strftime('%Y/%m/%d') }}">링크</a> / <a href="#bottom">맨 아래로 &darr;</a>
+	<a href="{{ today.yesterday.url() }}">어제</a> &middot; <a href="{{ today.url() }}">오늘</a> &middot; <a href="{{ url_for('random') }}">아무 날</a> / <a href="http://links.langdev.org/{{ log.date.strftime('%Y/%m/%d') }}">링크</a> / <a href="#bottom">맨 아래로 &darr;</a>
 </p>
 
 <form method="get" action="{{ url_for('search') }}" id="search">
@@ -26,7 +26,7 @@
 
 <div id="content">
 {% if options.recent %}
-<p id="only-recent">최근 대화만 표시하고 있습니다. <a href="{{ log.url }}">전체 보기</a> / <a href="{{ log.url }}?recent={{ options.recent + 30 }}">30분 더 보기</a></p>
+<p id="only-recent">최근 대화만 표시하고 있습니다. <a href="{{ log.url() }}">전체 보기</a> / <a href="{{ log.url(options.recent + 30) }}">30분 더 보기</a></p>
 {% endif %}
 
 {% from 'macros.html' import message_rows %}
