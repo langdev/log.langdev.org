@@ -3,6 +3,7 @@ import io
 import re
 import time
 import json
+import random
 import datetime
 import functools
 import sqlite3
@@ -230,12 +231,17 @@ def index(channel):
     return redirect(today.url(recent=30))
 
 
-@app.route('/random')
-def random():
-    import random
+@app.route('/random', defaults={'channel': None}, endpoint='random')
+@app.route('/<channel>/random', endpoint='random')
+def random_(channel):
+    if channel is None:
+        channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
+        channel = random.choice([i['name'] for i in channels])
+    else:
+        channel = verify_channel(channel)
     ago = random.randrange(30, 600)
     rand = datetime.date.today() - datetime.timedelta(days=ago)
-    return redirect(url_for('log', date=rand))
+    return redirect(url_for('log', channel=channel[1:], date=rand))
 
 
 @app.route('/<date:date>', defaults={'channel': None})
