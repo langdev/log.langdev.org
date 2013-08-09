@@ -15,7 +15,7 @@ import tornado.iostream
 import tornadio2
 from flask import current_app
 
-from . import util
+from . import util, parser
 
 
 _log = logging.getLogger(__name__)
@@ -26,7 +26,8 @@ URL_REG = re.compile(r'(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?'
 
 
 def action(pattern):
-    pattern = re.compile(pattern)
+    if not hasattr(pattern, 'match'):
+        pattern = re.compile(pattern)
 
     def decorate(func):
         action.handlers.append((pattern, func))
@@ -48,15 +49,15 @@ def join_channel(bot, m):
         logger.info('Joining channel: %s', i['name'])
 
 
-@action(r'^\:(.+)\!(.+) PRIVMSG \#(.+) :(.+)')
+@action(parser.PRIVMSG_PATTERN)
 def update(bot, m):
     ChatConnection.emit_all('update')
     check_link(bot, m)
 
 
 def check_link(stream, m):
-    nick = m.group(1)
-    message = m.group(4)
+    nick = m.group('nick')
+    message = m.group('text')
     url_m = URL_REG.match(message)
     if url_m:
         url = url_m.group(0)
@@ -85,9 +86,13 @@ def get_timestamp(dt):
 
 
 class LogWriter(object):
-    def __init__(self, log_dir):
+    def __init__(self, log_dir, name):
+        if name.startswith('#'):
+            name = name[1:] + '.log'
+        else:
+            name += '.global-log'
         self.log_file = None
-        self.logfile_path = os.path.join(log_dir, 'langdev.log')
+        self.logfile_path = os.path.join(log_dir, name)
         try:
             mtime = os.path.getmtime(self.logfile_path)
             self.today = datetime.datetime.fromtimestamp(mtime)
@@ -117,14 +122,28 @@ class LogWriter(object):
         logfile.flush()
 
 
+class LogWriterFactory(object):
+    def __init__(self, log_dir):
+        self.log_dir = log_dir
+        self.loggers = {}
+
+    def get(self, name):
+        if name not in self.loggers:
+            self.loggers[name] = LogWriter(self.log_dir, name)
+        return self.loggers[name]
+
+
 class Bot(object):
-    def __init__(self, logger, use_ssl=False):
+    def __init__(self, logger_factory, use_ssl=False):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         if use_ssl:
             self.stream = tornado.iostream.SSLIOStream(sock)
         else:
             self.stream = tornado.iostream.IOStream(sock)
-        self.logger = logger
+        self.logger_factory = logger_factory
+
+    def log(self, channel, text):
+        self.logger_factory.get(channel).log(text)
 
     def connect(self, host, port):
         logger = _log.getChild('send_request')
@@ -142,8 +161,9 @@ class Bot(object):
     def receive_line(self, line):
         if not line:
             return
-        line = line.decode('utf-8')
-        self.logger.log('<<< ' + line)
+        line = line.decode('utf-8').rstrip('\r\n')
+        channel = parser.determine_channel(line)
+        self.log(channel, '<<< ' + line)
         for pattern, handler in action.handlers:
             match = pattern.match(line)
             if match:
@@ -151,7 +171,8 @@ class Bot(object):
         self.stream.read_until(b'\r\n', self.receive_line)
 
     def send_line(self, line):
-        self.logger.log('>>> ' + line)
+        channel = parser.determine_channel(line)
+        self.log(channel, '>>> ' + line)
         self.stream.write(line.encode('utf-8') + b'\r\n')
 
 
@@ -170,11 +191,15 @@ class ChatConnection(tornadio2.SocketConnection):
         logger.debug('Current connections: %s', self.connections)
 
     @tornadio2.conn.event
-    def msg(self, nick, msg):
-        channel = util.irc_channels(current_app.config['IRC_CHANNELS'])[0]
+    def msg(self, nick, channel, msg):
+        logger = _log.getChild(self.__class__.__name__ + '.msg')
+        channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
+        if channel not in (i['name'] for i in channels):
+            logger.warning('%s not in the channel list', channel)
+            return
         message = '<{0}> {1}'.format(nick, msg)
         message = message.replace('\r\n', ' ')
-        self.bot.send_line('PRIVMSG {0} :{1}'.format(channel['name'], message))
+        self.bot.send_line('PRIVMSG {0} :{1}'.format(channel, message))
         self.emit('update')
 
     @classmethod
@@ -184,9 +209,10 @@ class ChatConnection(tornadio2.SocketConnection):
 
 
 def launch_bot(config):
-    logger = LogWriter(config['LOG_DIR'])
+    logger_factory = LogWriterFactory(config['LOG_DIR'])
     host, port = config['IRC_HOST'], config['IRC_PORT']
-    bot = Bot(logger=logger, use_ssl=config.get('IRC_USE_SSL', False))
+    bot = Bot(logger_factory=logger_factory,
+              use_ssl=config.get('IRC_USE_SSL', False))
     bot.connect(host, port)
     return bot
 
