@@ -10,13 +10,16 @@ import sphinxapi
 from contextlib import closing
 
 import flask
-from flask import Flask, request, redirect, session, url_for, render_template
+from flask import (Flask, request, redirect, session, url_for, render_template,
+                   current_app)
 
 from logviewer.exc import AuthenticationError
 from logviewer.parser import parse_log
+from logviewer import routing, util
 
 
 app = Flask(__name__)
+app.url_map.converters['date'] = routing.DateConverter
 
 access_log = None
 
@@ -103,7 +106,8 @@ def sphinx_search(query, offset, count):
             sorted_messages = sorted(messages.iteritems(),
                                      key=lambda (k, v): k,
                                      reverse=True)
-            m = ((Log(datetime.datetime.strptime(k, "%Y%m%d").date()), v)
+            # TODO: should fix indexer.py
+            m = ((Log('#langdev', datetime.datetime.strptime(k, "%Y%m%d").date()), v)
                  for k, v in sorted_messages)
             return {
                 'total': result['total'],
@@ -112,7 +116,10 @@ def sphinx_search(query, offset, count):
 
 
 class Log(object):
-    def __init__(self, date):
+    def __init__(self, channel, date):
+        if not channel.startswith('#'):
+            raise ValueError()
+        self.name = channel[1:]
         self.date = date
 
     @property
@@ -121,14 +128,14 @@ class Log(object):
 
     @property
     def path(self):
-        path = os.path.join(app.config['LOG_DIR'], 'langdev.log')
+        path = os.path.join(app.config['LOG_DIR'], self.name + '.log')
         if not self.is_today:
             return path + '.' + self.date.strftime('%Y%m%d')
         else:
             return path
 
     def url(self, recent=None):
-        return url_for('log', date=self.date, recent=recent)
+        return url_for('log', channel=self.name, date=self.date, recent=recent)
 
     def get_messages(self, start=None):
         with io.open(self.path, encoding='utf-8', errors='replace') as fp:
@@ -136,12 +143,12 @@ class Log(object):
                 yield msg
 
     @staticmethod
-    def today():
-        return Log(datetime.date.today())
+    def today(channel):
+        return Log(channel, datetime.date.today())
 
     @property
     def yesterday(self):
-        return Log(self.date - datetime.timedelta(days=1))
+        return Log('#' + self.name, self.date - datetime.timedelta(days=1))
 
 
 CANONICAL_PATTERN = re.compile(r'^[\^\|_]*([^\^\|_]*).*$')
@@ -158,6 +165,21 @@ def hashed(value, limit):
     return hash(value) % limit
 
 app.jinja_env.filters.update(canonical=canonical, hash=hashed)
+
+
+def get_default_channel():
+    return util.irc_channels(current_app.config['IRC_CHANNELS'])[0]
+
+
+def verify_channel(channel):
+    channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
+    if channel is None:
+        return channels[0]['name']
+    channel = u'#' + channel
+    channel_names = (i['name'] for i in channels)
+    if channel not in channel_names:
+        flask.abort(404)
+    return channel
 
 
 def login_required(f):
@@ -200,9 +222,11 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/')
-def index():
-    today = Log.today()
+@app.route('/', defaults={'channel': None})
+@app.route('/<channel>')
+def index(channel):
+    channel = verify_channel(channel)
+    today = Log.today(channel)
     return redirect(today.url(recent=30))
 
 
@@ -214,11 +238,15 @@ def random():
     return redirect(url_for('log', date=rand))
 
 
-@app.route('/<date>')
+@app.route('/<date:date>', defaults={'channel': None})
+@app.route('/<channel>/<date:date>')
 @login_required
-def log(date):
-    date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-    log = Log(date)
+def log(channel, date):
+    if channel is None:
+        channel = get_default_channel()['name']
+        return redirect(url_for('log', channel=channel, date=date))
+    channel = verify_channel(channel)
+    log = Log(channel, date)
     if 'from' in request.args:
         start = int(request.args['from'])
     else:
@@ -242,19 +270,24 @@ def log(date):
             options['recent'] = recent
     messages = group_messages(messages, app.config['GROUP_THRES'])
     return render_template('log.html',
-                           today=Log.today(),
+                           today=Log.today(channel),
                            log=log,
                            messages=messages,
                            options=options,
                            last_no=last_no,
-                           username=session['username'])
+                           username=session['username'],
+                           channel=channel)
 
 
-@app.route('/atom')
-def atom():
+@app.route('/atom', defaults={'channel': None})
+@app.route('/<channel>/atom')
+def atom(channel):
     # TODO: auth
     # TODO: omit last group
-    log = Log.today()
+    if channel is None:
+        return redirect(url_for('atom', channel=get_default_channel()['name']))
+    channel = verify_channel(channel)
+    log = Log.today(channel)
     messages = group_messages(log.get_messages(), app.config['GROUP_THRES'])
     messages = reversed(list(messages))
     return render_template('atom_feed.xml', log=log, messages=messages)
@@ -287,18 +320,20 @@ def connect_db():
     return conn
 
 
-@app.route('/<date>/flags')
+@app.route('/<channel>/<date:date>/flags')
 @login_required
-def flags(date):
+def flags(channel, date):
+    channel = verify_channel(channel)
     with closing(connect_db()) as db:
         c = db.cursor()
         c.execute('select * from flags where date=? order by line', (date, ))
         return json.dumps([dict(row) for row in c])
 
 
-@app.route('/<date>/<line>/flags', methods=['POST'])
+@app.route('/<channel>/<date:date>/<line>/flags', methods=['POST'])
 @login_required
-def flag(date, line):
+def flag(channel, date, line):
+    channel = verify_channel(channel)
     db = connect_db()
     c = db.cursor()
     c.execute('insert into flags (date, time, line, title, user) '
@@ -309,6 +344,7 @@ def flag(date, line):
     id = c.lastrowid
     db.close()
     return str(id)
+
 
 if __name__ == '__main__':
     app.config.from_envvar('LOGVIEWER_SETTINGS')

@@ -56,6 +56,7 @@
 <script type="text/javascript">
 var from = {{ last_no + 1 }};
 var nickname = '{{ username }}';
+var channel = '{{ channel }}';
 
 var socket;
 
@@ -135,7 +136,7 @@ $('#say').submit(function(event) {
 	event.preventDefault();
 	var msg = $('#msg').val();
 	if (!msg) return;
-	socket.emit('msg', {nick: nickname, msg: msg});
+	socket.emit('msg', {nick: nickname, channel: channel, msg: msg});
 	$('#msg').attr('value', '');
 })
 </script>
