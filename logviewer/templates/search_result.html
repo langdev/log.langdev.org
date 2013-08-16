@@ -27,7 +27,7 @@
 {% from 'macros.html' import message_rows %}
 {% for log, messages in result %}
 <div class="day">
-	<h2><a href="{{ log.url() }}">{{ log.date }}</a></h2>
+	<h2><a href="{{ log.url() }}">#{{ log.name }} {{ log.date }}</a></h2>
 	<table>{{ message_rows(messages, log.url()) }}</table>
 </div>
 {% endfor %}

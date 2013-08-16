@@ -5,6 +5,7 @@ import time
 import json
 import random
 import datetime
+import itertools
 import functools
 import sqlite3
 import sphinxapi
@@ -81,39 +82,39 @@ def sphinx_search(query, offset, count):
     client = sphinxapi.SphinxClient()
     client.SetServer('localhost', 9312)
     client.SetWeights([100, 1])
-    client.SetSortMode(sphinxapi.SPH_SORT_EXTENDED, '@id DESC')
+    client.SetSortMode(sphinxapi.SPH_SORT_EXTENDED,
+                       'date DESC, channel ASC, @id DESC')
     client.SetLimits(offset, count, 100000)
     client.SetRankingMode(sphinxapi.SPH_RANK_PROXIMITY_BM25)
 
     client.SetMatchMode(sphinxapi.SPH_MATCH_BOOLEAN)
     result = client.Query(query, '*')
-    if result:
-        if 'matches' in result:
-            messages = {}
-            for msg in result['matches']:
-                attrs = msg['attrs']
-                t = time.localtime(attrs['time'])
-                key = time.strftime('%Y%m%d', t)
-                if key not in messages:
-                    messages[key] = []
-                messages[key].append({
-                    'type': 'privmsg',
-                    'no': attrs['no'],
-                    'time': datetime.datetime(*t[:7]),
-                    'nick': attrs['nick'].decode('utf-8'),
-                    'text': attrs['content'].decode('utf-8'),
-                    'is_bot': attrs['bot'],
-                })
-            sorted_messages = sorted(messages.iteritems(),
-                                     key=lambda (k, v): k,
-                                     reverse=True)
-            # TODO: should fix indexer.py
-            m = ((Log('#langdev', datetime.datetime.strptime(k, "%Y%m%d").date()), v)
-                 for k, v in sorted_messages)
-            return {
-                'total': result['total'],
-                'messages': m,
-            }
+    if result and 'matches' in result:
+        messages = []
+        for msg in result['matches']:
+            attrs = msg['attrs']
+            channel = attrs['channel']
+            t = time.localtime(attrs['time'])
+            d = str(attrs['date'])
+            date = datetime.datetime.strptime(d, '%Y%m%d').date()
+            key = (channel, date)
+            messages.append((key, {
+                'type': 'privmsg',
+                'channel': channel,
+                'no': attrs['no'],
+                'time': datetime.datetime(*t[:7]),
+                'nick': attrs['nick'].decode('utf-8'),
+                'text': attrs['content'].decode('utf-8'),
+                'is_bot': attrs['bot'],
+            }))
+        m = []
+        for k, v in itertools.groupby(messages, lambda x: x[0]):
+            channel, date = k
+            m.append((Log(channel, date), list(i[1] for i in v)))
+        return {
+            'total': result['total'],
+            'messages': m,
+        }
 
 
 class Log(object):
