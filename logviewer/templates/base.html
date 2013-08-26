@@ -6,8 +6,10 @@
 	<title>#langdev log: {% block title %}{% endblock %}</title>
 	<meta name="viewport" content="width=device-width" />
 	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+	<link rel="stylesheet" href="{{ url_for('static', filename='jquery.dropdown.css') }}" type="text/css">
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 	<script type="text/javascript" src="{{ url_for('static', filename='socket.io/socket.io.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='jquery.dropdown.js') }}"></script>
 </head>
 <body>
 <div class="langdev__nav">
