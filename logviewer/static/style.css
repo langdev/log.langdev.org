@@ -148,6 +148,28 @@ body {
     color: white;
 }
 
+.section-channel {
+    width: 46%;
+    padding: 0 2%;
+    float: left;
+}
+/* clearfix */
+.section-channel:before, .section-channel:after { content:""; display:table; }
+.section-channel:after { clear:both; }
+/* For IE 6/7 (trigger hasLayout) */
+.section-channel { zoom:1; }
+
+.section-channel h2 { margin-bottom: 0; }
+.section-channel h2 a { display: block; padding: 0.25em 0.5em; }
+.section-channel table { border-top: 2px solid #999; }
+
+@media (max-width: 767px) {
+    .section-channel {
+        width: 96%;
+        float: none;
+    }
+}
+
 /* http://jsbin.com/ijanas */
 tr.color-0 .nickname { color: hsl(0, 90%, 35%); }
 tr.color-1 .nickname { color: hsl(36, 90%, 35%); }

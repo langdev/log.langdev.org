@@ -230,9 +230,24 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/', defaults={'channel': None})
-@app.route('/<channel>')
-def index(channel):
+@app.route('/')
+@login_required
+def index():
+    channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
+    logs = []
+    for i in channels:
+        log = Log.today(i['name'])
+        message = list(log.get_messages())[-5:]
+        logs.append(dict(
+            log=log,
+            message=message,
+        ))
+    return render_template('index.html',
+                           logs=logs)
+
+
+@app.route('/<channel>', endpoint='channel')
+def channel_(channel):
     channel = verify_channel(channel)
     today = Log.today(channel)
     return redirect(today.url(recent=30))
