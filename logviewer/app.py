@@ -23,7 +23,15 @@ from logviewer import routing, util
 app = Flask(__name__)
 app.url_map.converters['date'] = routing.DateConverter
 
+
+@app.before_first_request
+def init_jinja_env():
+    current_app.jinja_env.globals.update(
+        LOGBOT_PORT=current_app.config['LOGBOT_LISTEN'],
+    )
+
 access_log = None
+
 
 def filter_recent(messages, minutes):
     n = len(messages)

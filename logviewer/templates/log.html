@@ -119,7 +119,7 @@ function start_chat() {
 	$('#say').slideDown();
 	_update_log(true);
 
-    socket = io.connect(location.protocol + '//' + location.hostname + ':8888');
+    socket = io.connect(location.protocol + '//' + location.hostname + ':{{ LOGBOT_PORT }}');
 
     socket.on('update', function () {
         _update_log();
