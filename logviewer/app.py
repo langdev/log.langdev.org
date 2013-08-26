@@ -278,9 +278,12 @@ def random_(channel):
 @login_required
 def log(channel, date):
     if channel is None:
-        channel = get_default_channel()['name']
+        channel = get_default_channel()['name'][1:]
         return redirect(url_for('log', channel=channel, date=date))
     channel = verify_channel(channel)
+    channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
+    channel_names = [i['name'][1:] for i in channels
+                                   if i['name'].startswith('#')]
     log = Log(channel, date)
     if not log.exists and not log.is_today:
         flask.abort(404)
@@ -310,7 +313,8 @@ def log(channel, date):
                            options=options,
                            last_no=last_no,
                            username=session['username'],
-                           channel=channel)
+                           channel=channel,
+                           channels=channel_names)
 
 
 @app.route('/atom', defaults={'channel': None})
