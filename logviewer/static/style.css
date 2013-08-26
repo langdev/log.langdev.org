@@ -28,6 +28,7 @@ td { padding: 0.5em 1em; border-bottom: 1px solid #ddd; line-height: 1.4; }
 #update a { font-size: 1.2em; text-align: center; border: 1px solid #ccc; background-color: #f4f4f4; display: block; padding: 0.5em; }
 i { font-size: 0; color: transparent; }
 #navbar { position: fixed; top: 0; right: 0; background-color: #eee; box-shadow: 0px 2px 5px #888; padding: 10px 20px; opacity: 0.8; }
+#navbar h1 { font-size: 1em; font-weight: normal; }
 #navbar h2 { margin: 0; }
 #only-recent { padding: 10px 20px; background-color: #ffc; margin: 0; border-bottom: 1px solid #ccc; }
 #enable-chat a { padding: 15px; font-size: 1.1em; text-align: center; display: block; background-color: #eee; }
@@ -147,6 +148,47 @@ body {
 .langdev__nav_inner li:hover a, .langdev__nav_inner li.active a {
     color: white;
 }
+
+.section-channel {
+    width: 46%;
+    padding: 0 2%;
+    float: left;
+}
+/* clearfix */
+.section-channel:before, .section-channel:after { content:""; display:table; }
+.section-channel:after { clear:both; }
+/* For IE 6/7 (trigger hasLayout) */
+.section-channel { zoom:1; }
+
+.section-channel h2 { margin-bottom: 0; }
+.section-channel h2 a { display: block; padding: 0.25em 0.5em; }
+.section-channel table { border-top: 2px solid #999; }
+
+@media (max-width: 767px) {
+    .section-channel {
+        width: 96%;
+        float: none;
+    }
+}
+
+.dropdown-target {
+    color: #08c;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.dropdown-target:after {
+    font-family: Consolas, Courier New, Arial, sans-serif;
+    content: '↓';
+    margin-left: 6px;
+    color: #08c;
+}
+
+.dropdown-target:hover { background: #fff; }
+.dropdown-target.dropdown-open { background: #888; color: #FFF; }
+.dropdown-target.dropdown-open:after { color: #FFF; }
+
 
 /* http://jsbin.com/ijanas */
 tr.color-0 .nickname { color: hsl(0, 90%, 35%); }

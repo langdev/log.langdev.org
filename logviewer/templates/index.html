@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from 'macros.html' import message_rows %}
+
+{% block content %}
+{% for i in logs %}
+<div class="section-channel">
+  <h2><a href="{{ url_for('channel', channel=i.log.name) }}">#{{ i.log.name }}</a></h2>
+
+  <table>
+    <tbody>{{ message_rows(i.message, log_url=i.log.url()) }}</tbody>
+  </table>
+</div>
+{% endfor %}
+{% endblock %}

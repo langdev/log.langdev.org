@@ -1,3 +1,5 @@
 *.egg-info/
 .tox/
 /build/
+/sphinx.conf
+/sphinx/*/
