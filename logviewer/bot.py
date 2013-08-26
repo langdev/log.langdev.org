@@ -161,7 +161,7 @@ class Bot(object):
     def receive_line(self, line):
         if not line:
             return
-        line = line.decode('utf-8').rstrip('\r\n')
+        line = line.decode('utf-8', 'replace').rstrip('\r\n')
         channel = parser.determine_channel(line)
         self.log(channel, '<<< ' + line)
         for pattern, handler in action.handlers:
