@@ -366,7 +366,9 @@ def flags(channel, date):
     channel = verify_channel(channel)
     with closing(connect_db()) as db:
         c = db.cursor()
-        c.execute('select * from flags where date=? order by line', (date, ))
+        c.execute('select * from flags where channel=? and date=? '
+                  'order by line',
+                  (channel, date))
         return json.dumps([dict(row) for row in c])
 
 
@@ -376,9 +378,9 @@ def flag(channel, date, line):
     channel = verify_channel(channel)
     db = connect_db()
     c = db.cursor()
-    c.execute('insert into flags (date, time, line, title, user) '
-              'values(?, ?, ?, ?, ?)',
-              (date, request.form['time'], int(line),
+    c.execute('insert into flags (channel, date, time, line, title, user) '
+              'values(?, ?, ?, ?, ?, ?)',
+              (channel, date, request.form['time'], int(line),
                request.form['title'], session['username']))
     db.commit()
     id = c.lastrowid
