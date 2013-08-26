@@ -221,7 +221,12 @@ def authenticate():
     access_log.write(u'[%s] %s logged in\n' %
                      (now.isoformat(), session['username']))
     access_log.flush()
-    return redirect(request.args.get('next', url_for('index')))
+    redirect_url = request.args.get('next')
+    if not redirect_url:
+        redirect_url = flask.session['_next_url']
+        if not redirect_url:
+            redirect_url = url_for('index')
+    return redirect(redirect_url)
 
 
 @app.route('/logout', methods=['GET', 'POST'])
