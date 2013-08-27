@@ -1,4 +1,4 @@
-body { margin: 0; font-size: 13px; font-family: Malgun Gothic, 맑은 고딕, sans-serif; }
+body { margin: 0; font-size: 13px; font-family: Malgun Gothic, "맑은 고딕", sans-serif; }
 a { color: #36c; text-decoration: none; }
 a:hover { background-color: #def; }
 h1, h2 { font-family: Helvetica, Arial, sans-serif; }

@@ -12,18 +12,7 @@
 	<script type="text/javascript" src="{{ url_for('static', filename='jquery.dropdown.js') }}"></script>
 </head>
 <body>
-<div class="langdev__nav">
-<div class="langdev__nav_inner">
-<h3><a href="http://langdev.org/">LangDev</a></h3>
-<ul>
-<li><a href="http://langdev.org/posts/">Forum</a></li>
-<li class="active"><a href="http://log.langdev.org/">Log</a></li>
-<li><a href="http://topics.langdev.org/">Topics</a></li>
-<li><a href="http://links.langdev.org/">Links</a></li>
-<li><a href="http://docs.langdev.org/">Docs</a></li>
-</ul>
-</div>
-</div>
+{% include 'nav.html' %}
 {% block content %}
 {% endblock %}
 <a name="bottom"></a>

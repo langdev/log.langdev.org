@@ -207,6 +207,11 @@ def login_required(f):
     return _wrapped
 
 
+@app.route('/favicon.ico')
+def favicon():
+    flask.abort(404)  # it's very annoying.
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     auth = app.config['AUTH_BACKEND']

@@ -151,15 +151,16 @@ $('#say').submit(function(event) {
 	socket.emit('msg', {nick: nickname, channel: channel, msg: msg});
 	$('#msg').attr('value', '');
 })
-
-if ($.fn.dropdown) {
-    $('#navbar > hgroup > h1').addClass('dropdown-target').css('margin-left', '-4px');
-}
 </script>
 {% else %}
 <p id="eol">* 로그의 끝입니다. *</p>
 {% endif %}
 
+<script type="text/javascript">
+if ($.fn.dropdown) {
+    $('#navbar > hgroup > h1').addClass('dropdown-target').css('margin-left', '-4px');
+}
+</script>
 <script type="text/javascript" src="{{ url_for('static', filename='flag.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='highlight.js') }}"></script>
 {% endblock %}
