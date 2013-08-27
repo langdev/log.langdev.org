@@ -4,29 +4,33 @@
 	<script type="text/javascript">document.documentElement.className += ' js';</script>
 	<meta charset="UTF-8" />
 	<title>#langdev log: {% block title %}{% endblock %}</title>
-	<meta name="viewport" content="width=device-width" />
+	<meta name="viewport" content="width=device-width">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
 	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
-	<link rel="stylesheet" href="{{ url_for('static', filename='jquery.dropdown.css') }}" type="text/css">
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 	<script type="text/javascript" src="{{ url_for('static', filename='socket.io/socket.io.min.js') }}"></script>
-	<script type="text/javascript" src="{{ url_for('static', filename='jquery.dropdown.js') }}"></script>
 </head>
 <body>
-<div class="langdev__nav">
-<div class="langdev__nav_inner">
-<h3><a href="http://langdev.org/">LangDev</a></h3>
-<ul>
-<li><a href="http://langdev.org/posts/">Forum</a></li>
-<li class="active"><a href="http://log.langdev.org/">Log</a></li>
-<li><a href="http://topics.langdev.org/">Topics</a></li>
-<li><a href="http://links.langdev.org/">Links</a></li>
-<li><a href="http://docs.langdev.org/">Docs</a></li>
-</ul>
-</div>
+<div class="navbar navbar-default navbar-static-top navbar-inverse navbar-global hidden-xs">
+    <div class="navbar-header">
+        <a class="navbar-brand" href="http://langdev.org/">LangDev</a>
+    </div>
+    <ul class="nav navbar-nav">
+        <li><a href="http://langdev.org/posts/">Forum</a></li>
+        <li class="active"><a href="http://log.langdev.org/">Log</a></li>
+        <li><a href="http://topics.langdev.org/">Topics</a></li>
+        <li><a href="http://links.langdev.org/">Links</a></li>
+        <li><a href="http://docs.langdev.org/">Docs</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+        <li class="navbar-text"><i class="glyphicon glyphicon-user"></i> {{ username }}</li>
+        <li><a href="{{ url_for('logout') }}">로그아웃</a></li>
+    </ul>
 </div>
 {% block content %}
 {% endblock %}
 <a name="bottom"></a>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 <script type="text/javascript">
 function apply_noreferrer(element) {
     $(element).find('a:not([rel~="noreferrer"])').each(function(i, e) {

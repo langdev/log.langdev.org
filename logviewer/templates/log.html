@@ -3,27 +3,31 @@
 {% block title %}{{ log.date }}{% endblock %}
 
 {% block content %}
-<div id="navbar">
+<div class="navbar navbar-default navbar-fixed-top navbar-log" data-spy="affix" data-offset-top="50">
+    <ul class="nav navbar-nav">
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle current-channel" data-toggle="dropdown">#{{ log.name }} <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+            {%- for chan in channels %}
+                <li><a href="{{ url_for('log', channel=chan, date=log.date) }}">#{{ chan }}</a></li>
+            {% endfor -%}
+            </ul>
+        </li>
+        <li class="navbar-text date">{{ log.date }}</li>
+        <li><a href="#bottom"><i class="glyphicon glyphicon-arrow-down"></i> 맨 아래로</a></li>
+        <li><a href="http://links.langdev.org/{{ log.date.strftime('%Y/%m/%d') }}"><i class="glyphicon glyphicon-link"></i> 링크 모아보기</a></li>
+    </ul>
 
-<hgroup>
-<h1 data-dropdown="#dropdown-channels">#{{ log.name }}</h1>
-<h2>{{ log.date }}</h2>
-</hgroup>
-
-<p id="nav">
-	<a href="{{ today.yesterday.url() }}">어제</a> &middot; <a href="{{ today.url() }}">오늘</a> &middot; <a href="{{ url_for('random') }}">아무 날</a> / <a href="http://links.langdev.org/{{ log.date.strftime('%Y/%m/%d') }}">링크</a> / <a href="#bottom">맨 아래로 &darr;</a>
-</p>
-
-<form method="get" action="{{ url_for('search') }}" id="search">
-<p><input type="text" name="q" value="" /> <input type="submit" value="찾기" /> / <a href="{{ url_for('atom') }}">Atom 피드</a></p>
-</form>
-</div>
-
-<div id="dropdown-channels" class="dropdown dropdown-tip">
-    <ul class="dropdown-menu">
-    {%- for chan in channels %}
-        <li><a href="{{ url_for('log', channel=chan, date=log.date) }}">#{{ chan }}</a></li>
-    {% endfor -%}
+    <form method="get" action="{{ url_for('search') }}" class="navbar-form navbar-right hidden-xs">
+        <div class="form-group">
+            <input type="text" name="q" value="" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-default">찾기</button>
+    </form>
+    <ul class="nav navbar-nav navbar-right">
+        <li><a href="{{ today.yesterday.url() }}">어제</a></li>
+        <li><a href="{{ today.url() }}">오늘</a></li>
+        <li><a href="{{ url_for('random') }}"><i class="glyphicon glyphicon-random"></i></a></li>
     </ul>
 </div>
 
@@ -38,7 +42,11 @@
 
 <div id="content">
 {% if options.recent %}
-<p id="only-recent">최근 대화만 표시하고 있습니다. <a href="{{ log.url() }}">전체 보기</a> / <a href="{{ log.url(options.recent + 30) }}">30분 더 보기</a></p>
+<div class="alert alert-info">
+    최근 대화만 표시하고 있습니다.
+    <a href="{{ log.url() }}" class="btn btn-default btn-sm">전체 보기</a>
+    <a href="{{ log.url(options.recent + 30) }}" class="btn btn-default btn-sm">30분 더 보기</a>
+</div>
 {% endif %}
 
 {% from 'macros.html' import message_rows %}
@@ -53,16 +61,16 @@
 
 {% if log.is_today %}
 <div id="enable-chat">
-<a href="#">대화 시작</a>
+    <a href="#" class="btn btn-default btn-lg btn-block">대화 시작</a>
 </div>
 
 <form method="post" action="say" id="say" style="display: none" autocomplete="off">
-<p>
-<input type="text" name="msg" id="msg" size="60" />
-<input type="submit" value="보내기" />
-{{ username }}로 로그인 함
-<a href="{{ url_for('logout') }}">로그아웃</a>
-</p>
+    <div class="input-group">
+        <input type="text" name="msg" id="msg" size="60" class="form-control">
+        <span class="input-group-btn">
+            <button class="btn btn-primary" type="submit">보내기</button>
+        </span>
+    </div>
 </form>
 
 <script type="text/javascript">
@@ -151,13 +159,10 @@ $('#say').submit(function(event) {
 	socket.emit('msg', {nick: nickname, channel: channel, msg: msg});
 	$('#msg').attr('value', '');
 })
-
-if ($.fn.dropdown) {
-    $('#navbar > hgroup > h1').addClass('dropdown-target').css('margin-left', '-4px');
-}
 </script>
 {% else %}
-<p id="eol">* 로그의 끝입니다. *</p>
+<hr>
+<p class="text-center text-muted">* 로그의 끝입니다. *</p>
 {% endif %}
 
 <script type="text/javascript" src="{{ url_for('static', filename='flag.js') }}"></script>

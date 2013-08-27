@@ -2,8 +2,9 @@
 {% from 'macros.html' import message_rows %}
 
 {% block content %}
+<div class="container">
 {% for i in logs %}
-<div class="section-channel">
+<div class="col-sm-6">
   <h2><a href="{{ url_for('channel', channel=i.log.name) }}">#{{ i.log.name }}</a></h2>
 
   <table>
@@ -11,4 +12,5 @@
   </table>
 </div>
 {% endfor %}
+</div>
 {% endblock %}
