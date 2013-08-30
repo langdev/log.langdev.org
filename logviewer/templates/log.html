@@ -78,7 +78,7 @@ window.chat = new ChatSession({
 	url: location.protocol + '//' + location.hostname + ':{{ LOGBOT_PORT }}',
 	nickname: '{{ username }}',
 	channel: '{{ channel }}',
-	from: '{{ last_no + 1 }}'
+	from: {{ last_no + 1 }}
 });
 
 window.logView = new LogView($('#updates'));
