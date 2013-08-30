@@ -64,7 +64,14 @@
 <a href="{{ url_for('logout') }}">로그아웃</a>
 </p>
 </form>
+{% else %}
+<p id="eol">* 로그의 끝입니다. *</p>
+{% endif %}
+</div>
+{% endblock %}
 
+{% block js %}
+{% if log.is_today %}
 <script type="text/javascript">
 var from = {{ last_no + 1 }};
 var nickname = '{{ username }}';
@@ -152,10 +159,7 @@ $('#say').submit(function(event) {
 	$('#msg').attr('value', '');
 })
 </script>
-{% else %}
-<p id="eol">* 로그의 끝입니다. *</p>
 {% endif %}
-
 <script type="text/javascript">
 if ($.fn.dropdown) {
     $('#navbar > hgroup > h1').addClass('dropdown-target').css('margin-left', '-4px');
