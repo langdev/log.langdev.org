@@ -156,7 +156,7 @@ $('#say').submit(function(event) {
 	var msg = $('#msg').val();
 	if (!msg) return;
 	socket.emit('msg', {nick: nickname, channel: channel, msg: msg});
-	$('#msg').attr('value', '');
+	$('#msg').val('');
 })
 </script>
 {% endif %}
