@@ -13,7 +13,7 @@ from contextlib import closing
 
 import flask
 from flask import (Flask, request, redirect, session, url_for, render_template,
-                   current_app)
+                   current_app, jsonify)
 
 from logviewer.exc import AuthenticationError
 from logviewer.parser import parse_log
@@ -315,8 +315,12 @@ def log(channel, date):
     else:
         last_no = 0
     if request.is_xhr:
-        return render_template('_messages.html',
-                               log=log, messages=messages, last_no=last_no)
+    	if messages:
+            html = render_template('_messages.html',
+                                   log=log, messages=messages, last_no=last_no)
+            return jsonify(html=html, last_no=last_no)
+        else:
+        	return jsonify(html=None)
     options = {}
     if log.is_today and 'recent' in request.args:
         recent = int(request.args['recent'])
