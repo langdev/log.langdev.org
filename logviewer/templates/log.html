@@ -64,98 +64,34 @@
 <a href="{{ url_for('logout') }}">로그아웃</a>
 </p>
 </form>
-
-<script type="text/javascript">
-var from = {{ last_no + 1 }};
-var nickname = '{{ username }}';
-var channel = '{{ channel }}';
-
-var socket;
-
-var hidden, visibilityChange;
-if (typeof document.hidden !== "undefined") {
-    hidden = "hidden";
-    visibilityChange = "visibilitychange";
-} else if (typeof document.mozHidden !== "undefined") {
-    hidden = "mozHidden";
-    visibilityChange = "mozvisibilitychange";
-} else if (typeof document.msHidden !== "undefined") {
-    hidden = "msHidden";
-    visibilityChange = "msvisibilitychange";
-} else if (typeof document.webkitHidden !== "undefined") {
-    hidden = "webkitHidden";
-    visibilityChange = "webkitvisibilitychange";
-}
-
-var origTitle = document.title;
-function handleVisibilityChange() {
-    if (!document[hidden]) {
-    	document.title = origTitle;
-    }
-}
-function notifyUpdate() {
-	if (document[hidden]) {
-        document.title = '+ ' + origTitle;
-    }
-}
-
-if (typeof document.addEventListener !== "undefined" &&
-    typeof hidden !== "undefined") {
-    // Handle page visibility change  
-    document.addEventListener(visibilityChange, handleVisibilityChange, false);
-}
-
-$('#enable-chat a').click(function() {
-	start_chat();
-	return false;
-});
-
-function scroll_to_bottom() {
-    $(window).scrollTop($(document).height() + 100000);
-}
-
-function start_chat() {
-	$('#enable-chat').slideUp();
-	$('#say').slideDown();
-	_update_log(true);
-
-    socket = io.connect(location.protocol + '//' + location.hostname + ':{{ LOGBOT_PORT }}');
-
-    socket.on('update', function () {
-        _update_log();
-    });
-}
-
-function _update_log(force_scroll) {
-    var _from = from,
-        $doc = $(document),
-        $window = $(window),
-        appendTarget = $('#updates');
-
-    $.get('?from=' + _from, function (data) {
-        if (from > _from) return;
-        notifyUpdate();
-        var willScroll = force_scroll || $doc.height() <= $window.scrollTop() + $window.height() + 20;
-        appendTarget.append(data)
-        apply_noreferrer(appendTarget);
-        if (willScroll) {
-        	scroll_to_bottom();
-        }
-    });
-}
-
-$('#say').submit(function(event) {
-	event.preventDefault();
-	var msg = $('#msg').val();
-	if (!msg) return;
-	socket.emit('msg', {nick: nickname, channel: channel, msg: msg});
-	$('#msg').attr('value', '');
-})
-</script>
 {% else %}
 <p id="eol">* 로그의 끝입니다. *</p>
 {% endif %}
+</div>
+{% endblock %}
 
+{% block js %}
+{% if log.is_today %}
+<script type="text/javascript" src="{{ url_for('static', filename='chat.js') }}"></script>
+<script>
+window.chat = new ChatSession({
+	url: location.protocol + '//' + location.hostname + ':{{ LOGBOT_PORT }}',
+	nickname: '{{ username }}',
+	channel: '{{ channel }}',
+	from: {{ last_no + 1 }}
+});
+
+window.logView = new LogView($('#updates'));
+
+window.chatController = new ChatController({
+	session: chat,
+	startChatView: $('#enable-chat'),
+	inputFormView: $('#say'),
+	inputView: $('#msg'),
+	logView: window.logView
+});
+</script>
+{% endif %}
 <script type="text/javascript">
 if ($.fn.dropdown) {
     $('#navbar > hgroup > h1').addClass('dropdown-target').css('margin-left', '-4px');
