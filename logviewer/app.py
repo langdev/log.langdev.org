@@ -148,8 +148,8 @@ class Log(object):
     def exists(self):
         return os.path.isfile(self.path)
 
-    def url(self, recent=None):
-        return url_for('log', channel=self.name, date=self.date, recent=recent)
+    def url(self, recent=None, **kwargs):
+        return url_for('log', channel=self.name, date=self.date, recent=recent, **kwargs)
 
     def get_messages(self, start=None):
         if not self.exists:
@@ -345,14 +345,18 @@ def atom(channel):
     # TODO: auth
     # TODO: omit last group
     if channel is None:
-        return redirect(url_for('atom', channel=get_default_channel()['name']))
+        return redirect(url_for('atom', channel=get_default_channel()['name'][1:]))
     channel = verify_channel(channel)
     log = Log.today(channel)
     if not log.exists:
         flask.abort(404)
     messages = group_messages(log.get_messages(), app.config['GROUP_THRES'])
     messages = reversed(list(messages))
-    return render_template('atom_feed.xml', log=log, messages=messages)
+    return render_template('atom_feed.xml',
+        log=log,
+        messages=messages,
+        channel=channel,
+    )
 
 
 @app.route('/search')
