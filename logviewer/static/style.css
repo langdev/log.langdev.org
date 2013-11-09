@@ -1,24 +1,22 @@
-body {
-	padding-top: 50px; /* navbar */
-}
-
 .form-login {
 	width: 330px;
-	margin: 0 auto;
+	margin: 20px auto;
 }
 
 .navbar-global {
-	margin-bottom: 0;
-	position: absolute;
-	top: 0;
-	width: 100%;
+    margin-bottom: 0;
 }
-
+.navbar-log {
+    width: 100%;
+}
 .navbar-log.affix-top {
-	margin-bottom: 0;
-	position: static;
+    position: absolute;
 }
-.navbar-log .nav li { float: left; }
+.navbar-log.affix {
+    position: fixed;
+    top: 0;
+}
+.navbar-log .nav > li { float: left; }
 .navbar-log .current-channel,
 .navbar-log .date {
 	font-size: 1.2em;
@@ -28,8 +26,11 @@ body {
 	margin-top: 13px;
 	margin-bottom: 13px;
 }
+#content.with-navbar-log {
+    padding-top: 50px;
+}
 
-#flags { position: fixed; right: 0; bottom: 0; margin: 10px; background-color: #fff; width: 280px; padding: 10px; border: 1px solid #000; opacity: 0.4; }
+#flags { position: fixed; right: 0; bottom: 0; margin: 10px; background-color: #fff; width: 280px; padding: 10px; border: 1px solid #000; opacity: 0.4; z-index: 10; }
 #flags h3 { margin-top: 0; }
 #flags:hover { opacity: 1; }
 #flags ul { margin: 0; padding: 0; list-style: none; }

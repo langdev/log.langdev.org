@@ -3,7 +3,7 @@
 {% block title %}{{ log.date }}{% endblock %}
 
 {% block content %}
-<div class="navbar navbar-default navbar-fixed-top navbar-log" data-spy="affix" data-offset-top="50">
+<div class="navbar navbar-default navbar-log" data-spy="affix" data-offset-top="50">
     <ul class="nav navbar-nav">
         <li class="dropdown">
             <a href="#" class="dropdown-toggle current-channel" data-toggle="dropdown">#{{ log.name }} <b class="caret"></b></a>
@@ -40,7 +40,7 @@
 <p id="flag-mode-desc" style="display: none">깃발을 꽂기 원하는 줄의 시간 링크를 누르세요.</p>
 </div>
 
-<div id="content">
+<div id="content" class="with-navbar-log">
 {% if options.recent %}
 <div class="alert alert-info">
     최근 대화만 표시하고 있습니다.
