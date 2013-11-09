@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import flask
 from flask import request, url_for
 from flask.ext.oauthlib.client import OAuth, OAuthException
 import requests
@@ -28,9 +29,8 @@ class GoogleAppsAuth(AuthBackend):
         self.authenticate = self.remote.authorized_handler(self._authorize)
 
     def login(self, error=None):
-        callback_url = url_for('authenticate',
-                               next=request.args.get('next'),
-                               _external=True)
+        flask.session['_next_url'] = request.args.get('next')
+        callback_url = url_for('authenticate', _external=True)
         return self.remote.authorize(callback=callback_url)
 
     def _authorize(self, resp):

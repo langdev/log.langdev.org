@@ -13,7 +13,7 @@ from contextlib import closing
 
 import flask
 from flask import (Flask, request, redirect, session, url_for, render_template,
-                   current_app)
+                   current_app, jsonify)
 
 from logviewer.exc import AuthenticationError
 from logviewer.parser import parse_log
@@ -23,7 +23,15 @@ from logviewer import routing, util
 app = Flask(__name__)
 app.url_map.converters['date'] = routing.DateConverter
 
+
+@app.before_first_request
+def init_jinja_env():
+    current_app.jinja_env.globals.update(
+        LOGBOT_PORT=current_app.config['LOGBOT_LISTEN'],
+    )
+
 access_log = None
+
 
 def filter_recent(messages, minutes):
     n = len(messages)
@@ -140,8 +148,8 @@ class Log(object):
     def exists(self):
         return os.path.isfile(self.path)
 
-    def url(self, recent=None):
-        return url_for('log', channel=self.name, date=self.date, recent=recent)
+    def url(self, recent=None, **kwargs):
+        return url_for('log', channel=self.name, date=self.date, recent=recent, **kwargs)
 
     def get_messages(self, start=None):
         if not self.exists:
@@ -199,6 +207,11 @@ def login_required(f):
     return _wrapped
 
 
+@app.route('/favicon.ico')
+def favicon():
+    flask.abort(404)  # it's very annoying.
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     auth = app.config['AUTH_BACKEND']
@@ -221,7 +234,12 @@ def authenticate():
     access_log.write(u'[%s] %s logged in\n' %
                      (now.isoformat(), session['username']))
     access_log.flush()
-    return redirect(request.args.get('next', url_for('index')))
+    redirect_url = request.args.get('next')
+    if not redirect_url:
+        redirect_url = flask.session['_next_url']
+        if not redirect_url:
+            redirect_url = url_for('index')
+    return redirect(redirect_url)
 
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -297,8 +315,12 @@ def log(channel, date):
     else:
         last_no = 0
     if request.is_xhr:
-        return render_template('_messages.html',
-                               log=log, messages=messages, last_no=last_no)
+    	if messages:
+            html = render_template('_messages.html',
+                                   log=log, messages=messages, last_no=last_no)
+            return jsonify(html=html, last_no=last_no)
+        else:
+        	return jsonify(html=None)
     options = {}
     if log.is_today and 'recent' in request.args:
         recent = int(request.args['recent'])
@@ -323,14 +345,18 @@ def atom(channel):
     # TODO: auth
     # TODO: omit last group
     if channel is None:
-        return redirect(url_for('atom', channel=get_default_channel()['name']))
+        return redirect(url_for('atom', channel=get_default_channel()['name'][1:]))
     channel = verify_channel(channel)
     log = Log.today(channel)
     if not log.exists:
         flask.abort(404)
     messages = group_messages(log.get_messages(), app.config['GROUP_THRES'])
     messages = reversed(list(messages))
-    return render_template('atom_feed.xml', log=log, messages=messages)
+    return render_template('atom_feed.xml',
+        log=log,
+        messages=messages,
+        channel=channel,
+    )
 
 
 @app.route('/search')

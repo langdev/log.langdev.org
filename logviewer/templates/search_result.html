@@ -34,7 +34,9 @@
 </div>
 
 {{ page_nav(pages) }}
+{% endblock %}
 
+{% block js %}
 <script type="text/javascript">
 var re = /{{ query_pattern }}/gi;
 var repl = "<span class=\"highlight\">$&</span>"
