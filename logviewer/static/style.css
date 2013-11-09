@@ -30,11 +30,14 @@
     padding-top: 50px;
 }
 
-#flags { position: fixed; right: 0; bottom: 0; margin: 10px; background-color: #fff; width: 280px; padding: 10px; border: 1px solid #000; opacity: 0.4; z-index: 10; }
-#flags h3 { margin-top: 0; }
-#flags:hover { opacity: 1; }
-#flags ul { margin: 0; padding: 0; list-style: none; }
-#toggle-flag-mode { margin-top: 1em; }
+#flag-mode-desc {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    width: 360px;
+    margin-left: -180px; /* 360 * 0.5 */
+    text-align: center;
+}
 a.flaggable { font-weight: bold; color: #7a0; }
 
 table { border-collapse: collapse; margin-bottom: 0; width: 100%; }
