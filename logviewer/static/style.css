@@ -8,7 +8,6 @@
 }
 .navbar-log {
     width: 100%;
-    z-index: 100;
 }
 .navbar-log.affix-top {
     position: absolute;
@@ -17,15 +16,10 @@
     position: fixed;
     top: 0;
 }
-.navbar-log .nav > li { float: left; }
 .navbar-log .current-channel,
 .navbar-log .date {
 	font-size: 1.2em;
 	font-weight: bold;
-}
-.navbar-log .date.navbar-text {
-	margin-top: 13px;
-	margin-bottom: 13px;
 }
 #content.with-navbar-log {
     padding-top: 50px;
@@ -108,7 +102,6 @@ html.js tr .nickname span { padding: 4px; border-radius: 8px; cursor: pointer; }
 }
 
 @media (max-width: 767px) {
-    #flags { position: static; border: none; margin: 0; width: 100%; }
     .time { display: none; }
     .nickname, .message { padding-left: 5px; }
     .message { word-wrap: break-word; }
