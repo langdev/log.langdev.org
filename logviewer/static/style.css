@@ -8,6 +8,7 @@
 }
 .navbar-log {
     width: 100%;
+    z-index: 100;
 }
 .navbar-log.affix-top {
     position: absolute;
@@ -79,6 +80,32 @@ tr.color-8.selected, html.js tr.color-8 .nickname span:hover { background-color:
 tr.color-9.selected, html.js tr.color-9 .nickname span:hover { background-color: hsl(342, 85%, 93%); }
 html.js tr.selected .nickname span:hover { background-color: white; }
 html.js tr .nickname span { padding: 4px; border-radius: 8px; cursor: pointer; }
+
+.animated{-webkit-animation-fill-mode:both;-moz-animation-fill-mode:both;-ms-animation-fill-mode:both;-o-animation-fill-mode:both;animation-fill-mode:both;-webkit-animation-duration:1s;-moz-animation-duration:1s;-ms-animation-duration:1s;-o-animation-duration:1s;animation-duration:1s;}.animated.hinge{-webkit-animation-duration:1s;-moz-animation-duration:1s;-ms-animation-duration:1s;-o-animation-duration:1s;animation-duration:1s;}@-webkit-keyframes flash {
+	0%, 50%, 100% {opacity: 1;}	25%, 75% {opacity: 0;}
+}
+
+@-moz-keyframes flash {
+	0%, 50%, 100% {opacity: 1;}	
+	25%, 75% {opacity: 0;}
+}
+
+@-o-keyframes flash {
+	0%, 50%, 100% {opacity: 1;}	
+	25%, 75% {opacity: 0;}
+}
+
+@keyframes flash {
+	0%, 50%, 100% {opacity: 1;}	
+	25%, 75% {opacity: 0;}
+}
+
+.flash {
+	-webkit-animation-name: flash;
+	-moz-animation-name: flash;
+	-o-animation-name: flash;
+	animation-name: flash;
+}
 
 @media (max-width: 767px) {
     #flags { position: static; border: none; margin: 0; width: 100%; }

@@ -103,4 +103,16 @@ window.chatController = new ChatController({
 {% endif %}
 <script type="text/javascript" src="{{ url_for('static', filename='flag.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='highlight.js') }}"></script>
+<script>
+function adjustedScrollToHash(offset) {
+    if (!location.hash) return;
+    var line = $(location.hash);
+    if (line.length > 0) {
+        $(window).scrollTop(line.offset().top - offset);
+        line.addClass('flash animated');
+    }
+}
+adjustedScrollToHash(150);
+$(window).on('hashchange', function() { adjustedScrollToHash(100) });
+</script>
 {% endblock %}
