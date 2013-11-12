@@ -56,6 +56,9 @@ def update(bot, m):
 
 
 def check_link(stream, m):
+    api_key = current_app.config.get('LANGDEV_LINKS_API_KEY')
+    if not api_key:
+        return
     nick = m.group('nick')
     message = m.group('text')
     url_m = URL_REG.match(message)
@@ -63,7 +66,7 @@ def check_link(stream, m):
         url = url_m.group(0)
         ts = time.time()
         auth = hashlib.md5()
-        auth.update(current_app.config['LANGDEV_LINKS_API_KEY'])
+        auth.update(api_key)
         auth.update(str(int(ts)))
         auth.update(hashlib.md5(url).hexdigest())
         auth = auth.hexdigest()

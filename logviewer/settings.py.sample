@@ -48,5 +48,6 @@ SEARCH_RESULTS_PER_PAGE = 100
 SECRET_KEY = ''
 
 LANGDEV_LINKS_API_KEY = ''
+LANGDEV_LINKS_BASE_URL = '' # 마지막 /를 생략하세요.
 
 FLAG_DB = 'flag.db'

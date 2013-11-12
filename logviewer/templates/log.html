@@ -37,7 +37,9 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="glyphicon glyphicon-flag"></i> 깃발 <b class="caret"></b></a>
             <ul class="dropdown-menu" id="flags"></ul>
         </li>
-        <li><a href="http://links.langdev.org/{{ log.date.strftime('%Y/%m/%d') }}"><i class="glyphicon glyphicon-link"></i> 링크 모아보기</a></li>
+    {% if config.LANGDEV_LINKS_BASE_URL %}
+        <li><a href="{{ config.LANGDEV_LINKS_BASE_URL }}/{{ log.date.strftime('%Y/%m/%d') }}"><i class="glyphicon glyphicon-link"></i> 링크 모아보기</a></li>
+    {% endif %}
     </ul>
 
     <form method="get" action="{{ url_for('search') }}" class="navbar-form navbar-right">
