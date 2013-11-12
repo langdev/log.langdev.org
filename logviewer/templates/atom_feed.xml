@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <title>Log of {{ channel }}</title>
-{% set log_url = log.url(_external=True) %}
-    <link href="{{ log_url }}" />
+    <link href="{{ url_for('channel', channel=log.name, _external=True) }}" />
 {% from 'macros.html' import message_rows %}
+{% set log_url = log.url(_external=True) %}
 {% for group in messages %}
 {% if loop.first %}
     <updated>{{ group[-1].time.isoformat() }}</updated>
