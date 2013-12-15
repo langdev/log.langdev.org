@@ -252,6 +252,8 @@ def logout():
 @login_required
 def index():
     channels = util.irc_channels(current_app.config['IRC_CHANNELS'])
+    if len(channels) == 1:
+        return redirect(url_for('channel', channel=channels[0]['name'][1:]))
     logs = []
     for i in channels:
         log = Log.today(i['name'])
