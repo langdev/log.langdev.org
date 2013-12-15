@@ -128,7 +128,7 @@ window.chatController = new ChatController({
 <script type="text/javascript" src="{{ url_for('static', filename='highlight.js') }}"></script>
 <script>
 function adjustedScrollToHash(offset) {
-    if (!location.hash) return;
+    if (!location.hash || location.hash.indexOf('line') == -1) return;
     var line = $(location.hash);
     if (line.length > 0) {
         $(window).scrollTop(line.offset().top - offset);
