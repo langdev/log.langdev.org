@@ -8,10 +8,9 @@ from flask import request, current_app, render_template
 from .base import AuthBackend
 from ..exc import AuthenticationError
 
-
-class BypassAuth(AuthBackend):
+class GuestAuth(AuthBackend):
     def login(self, error=None):
-        return render_template('login.html', error=error,
+        return render_template('auth/guest.html', error=error,
                                next=request.args.get('next'))
 
     def authenticate(self):

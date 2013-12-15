@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os.path
-from logviewer.auth.langdev import LangDevAuth
 
 # 디버깅 플래그
 DEBUG = True
@@ -23,12 +22,9 @@ IRC_CHANNELS = (
     {'name': '#langdev', 'password': ''},
 )
 
-# LangDev 포럼에서 발급받은 애플리케이션 키와 비밀키를 여기에 설정합니다.
-# http://langdev.org/apps/ 페이지에서 키를 발급받을 수 있습니다.
-AUTH_BACKEND = LangDevAuth(
-    app_key='',
-    secret_key='',
-)
+# 인증 백엔드를 설정합니다.
+from logviewer.auth.guest import GuestAuth
+AUTH_BACKEND = GuestAuth()
 
 # 로그 폴더와 약어(synonym) 목록 파일의 경로를 지정합니다.
 # 약어 파일은 저장소의 루트 폴더에 있습니다.

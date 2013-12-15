@@ -15,7 +15,7 @@ class LangDevAuth(AuthBackend):
         self._secret_key = secret_key
 
     def login(self, error=None):
-        return render_template('login.html', error=error,
+        return render_template('auth/basic.html', error=error,
                                next=request.args.get('next'))
 
     def authenticate(self):

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}login{% endblock %}
+
+{% block content %}
+<form method="post" action="{{ url_for('authenticate', next=next) }}" class="form-login">
+<div class="panel panel-default">
+    <div class="panel-heading">사용할 대화명을 입력하세요.</div>
+
+    <div class="panel-body">
+        {% if error %}
+        <div class="alert alert-warning">대화명을 입력해주세요.</div>
+        {% endif %}
+
+        <div class="form-group">
+            <input type="text" name="username" id="username" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">입장</button>
+    </div>
+</form>
+{% endblock %}
