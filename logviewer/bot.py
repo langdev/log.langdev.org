@@ -158,6 +158,9 @@ class Bot(object):
 
     def send_request(self):
         self.send_line('USER nakji 0 * :fisher')
+        password = current_app.config['IRC_PASSWORD']
+        if password:
+            self.send_line('PASS ' + password)
         self.send_line('NICK ' + current_app.config['IRC_NICKNAME'])
         self.stream.read_until(b'\r\n', self.receive_line)
 
