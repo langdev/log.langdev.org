@@ -236,7 +236,7 @@ def authenticate():
     access_log.flush()
     redirect_url = request.args.get('next')
     if not redirect_url:
-        redirect_url = flask.session['_next_url']
+        redirect_url = flask.session.get('_next_url')
         if not redirect_url:
             redirect_url = url_for('index')
     return redirect(redirect_url)
